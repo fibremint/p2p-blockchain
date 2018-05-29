@@ -3,9 +3,11 @@ package com.fibremint.blockchain;
 import com.fibremint.blockchain.blockchain.Blockchain;
 import com.fibremint.blockchain.blockchain.BlockchainServerRunnable;
 import com.fibremint.blockchain.net.HeartBeatPeriodicRunnable;
-import com.fibremint.blockchain.net.PeriodicCatchupRunnable;
+import com.fibremint.blockchain.blockchain.PeriodicCatchupRunnable;
 import com.fibremint.blockchain.blockchain.PeriodicCommitRunnable;
 import com.fibremint.blockchain.net.ServerInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -16,6 +18,7 @@ import java.util.HashMap;
 public class BlockchainServer {
 
     public static void main(String[] args) {
+        Logger logger = LoggerFactory.getLogger(BlockchainServer.class);
         if (args.length != 3) {
             return;
         }
@@ -31,7 +34,7 @@ public class BlockchainServer {
         } catch (NumberFormatException e) {
             e.printStackTrace();
         }
-		System.out.println("here");
+        logger.info("Block chain server started");
         Blockchain blockchain = new Blockchain();
 
         HashMap<ServerInfo, Date> remoteServerStatus = new HashMap<ServerInfo, Date>();

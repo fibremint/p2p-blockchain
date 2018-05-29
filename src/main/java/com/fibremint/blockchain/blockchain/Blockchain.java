@@ -1,6 +1,7 @@
 package com.fibremint.blockchain.blockchain;
 
 import com.fibremint.blockchain.message.Transaction;
+import com.fibremint.blockchain.message.model.MessageTransaction;
 
 import java.util.ArrayList;
 import java.util.Base64;
@@ -40,17 +41,17 @@ public class Blockchain {
         this.pool = pool;
     }
 
-    public synchronized boolean addTransaction(String txString) {
-        String[] tokens = txString.split("\\|");
-        if (tokens.length != 3) {
+    public synchronized boolean addTransaction(MessageTransaction message) {
+        //String[] tokens = txString.split("\\|");
+        /*if (tokens.length != 3) {
             return false;
         }
         if (!tokens[0].equals("tx")) {
             return false;
-        }
+        }*/
         Transaction transaction = new Transaction();
-        transaction.setSender(tokens[1]);
-        transaction.setContent(tokens[2]);
+        transaction.setSender(message.getSender());
+        transaction.setContent(message.getContent());
         if (!transaction.isValid()) {
             return false;
         }

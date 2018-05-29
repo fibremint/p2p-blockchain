@@ -25,7 +25,7 @@ public class MessageSenderRunnable implements Runnable{
             s.connect(new InetSocketAddress(this.destServer.getHost(), this.destServer.getPort()), 10000);
             PrintWriter pw =  new PrintWriter(s.getOutputStream(), true);
             
-            System.out.println("sending " + message);
+            //System.out.println("sending " + message);
             // send the message forward
         	pw.println(message);
         	pw.flush();
@@ -35,6 +35,7 @@ public class MessageSenderRunnable implements Runnable{
             s.close();
             
         } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

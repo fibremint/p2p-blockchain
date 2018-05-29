@@ -59,6 +59,7 @@ public class Block implements Serializable {
         this.currentHash = calculateHash();
     }
 
+    // TODO: rework out.writeUTF
     public byte[] calculateHash() {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

@@ -1,12 +1,13 @@
-package com.fibremint.blockchain.net;
+package com.fibremint.blockchain.blockchain;
 
-import com.fibremint.blockchain.blockchain.Blockchain;
 import com.fibremint.blockchain.message.MessageSenderRunnable;
+import com.fibremint.blockchain.message.model.MessageLastBlock;
+import com.fibremint.blockchain.net.ServerInfo;
+import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Base64;
 import java.util.Collections;
 
 public class PeriodicCatchupRunnable implements Runnable {
@@ -22,22 +23,25 @@ public class PeriodicCatchupRunnable implements Runnable {
 	
 	@Override
 	public void run() {
+	    Gson gson = new Gson();
 		while(true) {
-			String LBmessage = "lb|" + String.valueOf(localPort) + "|" + String.valueOf(blockchain.getLength()) + "|";
-			if (blockchain.getHead() != null) {
+			//String LBmessage = "lb|" + String.valueOf(localPort) + "|" + String.valueOf(blockchain.getLength()) + "|";
+            MessageLastBlock message = new MessageLastBlock(localPort, blockchain.getLength());
+            if (blockchain.getHead() != null) {
 				byte[] latestHash = blockchain.getHead().calculateHash();
-				if (latestHash != null)
-					LBmessage += Base64.getEncoder().encodeToString(latestHash);
-				else
-					LBmessage += "null";
-				
+				if (latestHash != null) {
+                    //LBmessage += Base64.getEncoder().encodeToString(latestHash);
+                    message.setLatestHash(latestHash);
+				} else {
+                    //LBmessage += "null";
+                }
 			} else {
-				LBmessage += "null";
+				//LBmessage += "null";
 			}
 			 
 			
 			if (serverStatus.size() <= 5) {
-				this.broadcast(LBmessage);
+				this.broadcast(gson.toJson(message));
 				
 			} else {
 				//select 5 random peers
@@ -48,7 +52,7 @@ public class PeriodicCatchupRunnable implements Runnable {
 					Collections.shuffle(allPeers);
 					targetPeers.add(allPeers.remove(0));
 				}
-				this.multicast(targetPeers, LBmessage);
+				this.multicast(targetPeers, gson.toJson(message));
 				
 			}
 
