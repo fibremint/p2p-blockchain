@@ -1,9 +1,12 @@
 package com.fibremint.blockchain.net;
 
+import com.fibremint.blockchain.message.model.MessageHeartbeat;
+
 import java.util.Date;
 import java.util.HashMap;
 
 public class HeartBeatPeriodicRunnable implements Runnable {
+    public static final int THREAD_SLEEP = 2000;
 
     private HashMap<ServerInfo, Date> serverStatus;
     private int sequenceNumber;
@@ -18,10 +21,11 @@ public class HeartBeatPeriodicRunnable implements Runnable {
 
     @Override
     public void run() {
-    	String message;
+        MessageHeartbeat message;
         while(true) {
             // broadcast HeartBeat message to all peers
-            message = "hb|" + String.valueOf(localPort) + "|" + String.valueOf(sequenceNumber);
+            //message = "hb|" + String.valueOf(localPort) + "|" + String.valueOf(sequenceNumber);
+            message = new MessageHeartbeat(localPort, sequenceNumber);
 
             for (ServerInfo info : serverStatus.keySet()) {
                 Thread thread = new Thread(new HeartBeatSenderRunnable(info, message));
@@ -33,7 +37,7 @@ public class HeartBeatPeriodicRunnable implements Runnable {
             
             // sleep for two seconds
             try {
-                Thread.sleep(2000);
+                Thread.sleep(THREAD_SLEEP);
             } catch (InterruptedException e) {
             }
         }

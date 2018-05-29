@@ -18,11 +18,12 @@ import java.util.Date;
 import java.util.HashMap;
 
 public class BlockchainServerRunnable implements Runnable{
+    private static final int REMOTE_SERVER_TIMEOUT = 4000;
 
     private Socket clientSocket;
     private Blockchain blockchain;
     private HashMap<ServerInfo, Date> serverStatus;
-    String remoteIP;
+    private String remoteIP;
     private int localPort;
     private Gson gson;
 
@@ -36,6 +37,7 @@ public class BlockchainServerRunnable implements Runnable{
         RuntimeTypeAdapterFactory<MessageBase> messageAdapterFactory = RuntimeTypeAdapterFactory
                 .of(MessageBase.class, "Type")
                 .registerSubtype(MessageCatchUp.class, "catchUp")
+                .registerSubtype(MessageHeartbeat.class, "heartbeat")
                 .registerSubtype(MessageLastBlock.class, "lastBlock")
                 .registerSubtype(MessageTransaction.class, "transaction")
                 .registerSubtype(MessageServerInQuestion.class, "serverInQuestion")
@@ -43,22 +45,6 @@ public class BlockchainServerRunnable implements Runnable{
 
         gson = new GsonBuilder().registerTypeAdapterFactory(messageAdapterFactory).create();
     }
-
-/*    private enum HandlerType {
-        transaction(value -> ),
-        printBlock,
-        heartbeat,
-        lastBlock,
-        catchUp;
-
-        private Function<String, Void> expression;
-
-        HandlerType(Function<String, Void> expression) {
-            this.expression = expression;
-        }
-
-        public
-    }*/
 
     public void run() {
         try {
@@ -69,7 +55,6 @@ public class BlockchainServerRunnable implements Runnable{
             JsonParser jsonParser = new JsonParser();
             JsonElement jsonElement;
             String messageType;
-        	//String innerJson = null;
 
         	while (true) {
         		String inputLine = inputReader.readLine();
@@ -79,55 +64,29 @@ public class BlockchainServerRunnable implements Runnable{
 
                 }
 
-        		//messages = gson.fromJson(inputLine, Messages.class);
                 jsonElement = jsonParser.parse(inputLine);
 
-
-        		/*for (Messages.Container container : messages) {
-        		    innerJson = gson.toJson(container.content);
-
-        		    switch (container.Type) {
-                        case transaction:
-                            this.transactionHandler(inputLine, outWriter);
-                            break;
-                        case printBlock:
-                            this.printBlockHandler(outWriter);
-                            break;
-                        case heartbeat:
-                        case serverInQuestion:
-                            this.heartBeatHandler(inputReader, inputLine, innerJson);
-                        case lastBlock:
-                            if (this.lastBlockHandler(inputLine, innerJson)) break;
-                        case catchUp:
-                            this.catchUpHandler(innerJson);
-                            break;
-
-                            default:
-
-                    }
-                }*/
         		messageType = jsonElement.getAsJsonObject().get("Type").getAsString();
-        		//String[] tokens = inputLine.split("\\|");
         		switch (MessageType.valueOf(messageType)) {
                     case catchUp:
-                        /*if (tokens[0].equals("cu")) {
-                            this.catchUpHandler(tokens);
-                            break;
-                        }*/
                         catchUpHandler(gson.fromJson(jsonElement, MessageCatchUp.class));
+                        break;
                     case heartbeat:
+                        this.heartBeatHandler(gson.fromJson(jsonElement, MessageHeartbeat.class));
+                        break;
                     case lastBlock:
                         if (this.lastBlockHandler(gson.fromJson(jsonElement, MessageLastBlock.class))) {
                             break;
                         }
                     case transaction:
         				this.transactionHandler(gson.fromJson(jsonElement, MessageTransaction.class), outWriter);
+        				break;
                     case printBlock:
         				this.printBlockHandler(outWriter);
-        			//case "cc":
-        				//this.serverHandler(inputLine, outWriter, tokens);
+        				break;
                     case serverInQuestion:
-        				this.heartBeatHandler(inputReader, inputLine, tokens);
+                        this.serverInQuestionHandler(gson.fromJson(jsonElement, MessageServerInQuestion.class));
+                        break;
         			default:
                        	outWriter.print("Error\n\n");
                        	outWriter.flush();
@@ -135,19 +94,16 @@ public class BlockchainServerRunnable implements Runnable{
         	}
             clientSocket.close();
         } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
-//Request handlers//-----------------------   
-
-	public void catchUpHandler(MessageCatchUp message) {
+	private void catchUpHandler(MessageCatchUp message) {
 		try (ObjectOutputStream outStream = new ObjectOutputStream(clientSocket.getOutputStream())){
 			if (!message.hasBlockchain()) {
-			//cu-only case
 				outStream.writeObject(blockchain.getHead());
 				outStream.flush();
 			} else {
-			//cu|<block's hash> case
 				Block currentBlock = blockchain.getHead();
 				while (true) {
 					if (Base64.getEncoder().encodeToString(currentBlock.calculateHash())
@@ -168,11 +124,11 @@ public class BlockchainServerRunnable implements Runnable{
 			
 			}
 		} catch (Exception e) {
+		    e.printStackTrace();
 		}
 	}
 
-	// last block
-    public boolean lastBlockHandler(MessageLastBlock message) {
+    private boolean lastBlockHandler(MessageLastBlock message) {
     	try {
     		String encodedHash;
     		if (blockchain.getHead() != null) {
@@ -251,44 +207,13 @@ public class BlockchainServerRunnable implements Runnable{
     	return false;
     }
 
-    /*
-    public void serverHandler(String inputLine, PrintWriter outWriter, String[] tokens) {
-        try {
-            switch (tokens[0]) {
-                case "tx":
-                    if (this.blockchain.addTransaction(inputLine))
-                        outWriter.print("Accepted\n\n");
-                    else
-                        outWriter.print("Rejected\n\n");
-                        outWriter.flush();
-                        break;
-                case "pb":
-                    outWriter.print(blockchain.toString() + "\n");
-                    System.out.println(blockchain.toString() + "\n");
-                    outWriter.flush();
-                    break;
-                case "cc":
-                    return;
-                    
-0            }
-        } catch (Exception e) {
-        	e.printStackTrace();
-        }
-    }
-    */
-
-    // transaction
     public void transactionHandler(MessageTransaction message, PrintWriter outWriter) {
         MessageTransaction transaction;
         try {
-    		if (this.blockchain.addTransaction(message)) {
-                //outWriter.print("Accepted\n\n");
+    		if (this.blockchain.addTransaction(message))
                 outWriter.print(gson.toJson(new MessageResult(MessageResult.Type.accepted)));
-                //transaction = new MessageTransaction(MessageEnum.MessageType.ACCEPTED)
-    		} else {
-    			//outWriter.print("Rejected\n\n");
+    		else
                 outWriter.print(gson.toJson(new MessageResult(MessageResult.Type.denied)));
-			}
 
             outWriter.flush();
 		} catch (Exception e) {
@@ -296,7 +221,6 @@ public class BlockchainServerRunnable implements Runnable{
 		}
 	}
 
-	// print block
 	public void printBlockHandler(PrintWriter outWriter) {
     	try {
     		outWriter.print(blockchain.toString() + "\n");
@@ -307,44 +231,49 @@ public class BlockchainServerRunnable implements Runnable{
 		}
 	}
 
-    public void heartBeatHandler(BufferedReader bufferedReader, String line, String[] tokens) {
+    public void heartBeatHandler(MessageHeartbeat message) {
+        ServerInfo serverInQuestion;
+
         try {	
             String remoteIP = (((InetSocketAddress) clientSocket.getRemoteSocketAddress()).getAddress()).toString().replace("/", "");
-            	
-            ServerInfo serverInQuestion;
-            switch (tokens[0]) {
-                case "hb":
-                	serverInQuestion = new ServerInfo(remoteIP, Integer.valueOf(tokens[1]));
-                		
-                	if (!serverStatus.containsKey(serverInQuestion)) {
-                		String forwardMessage = "si|" + String.valueOf(localPort) + "|" + remoteIP + "|" + tokens[1];
-                    	this.broadcastHeartbeat(forwardMessage, new ArrayList<ServerInfo>());
-                	}
-                		
-                	serverStatus.put(serverInQuestion, new Date());
-                	this.removeUnresponsive();
-            			
-                case "si":
-                	serverInQuestion = new ServerInfo(tokens[2], Integer.valueOf(tokens[3]));
-                	ServerInfo originator = new ServerInfo(remoteIP, Integer.valueOf(tokens[1]));
-                		
-                	if (!serverStatus.containsKey(serverInQuestion)) {
-                    	ArrayList<ServerInfo> exempt = new ArrayList<ServerInfo>();
-                    	exempt.add(originator);
-                    	exempt.add(serverInQuestion);
-                    	String relayMessage = "si|" + String.valueOf(localPort) + "|" + tokens[2] + "|" + tokens[3];
-                    	this.broadcastHeartbeat(relayMessage, exempt);
-                    		
-                	}
-                		
-                	serverStatus.put(serverInQuestion, new Date());
-                	serverStatus.put(originator, new Date());
-                	this.removeUnresponsive();
-                    	
-                default:     
+            serverInQuestion = new ServerInfo(remoteIP, message.getLocalPort());
+
+            if (!serverStatus.containsKey(serverInQuestion)) {
+                MessageServerInQuestion forwardMessage = new MessageServerInQuestion(
+                        localPort, remoteIP, message.getLocalPort());
+                this.broadcastHeartbeat(gson.toJson(forwardMessage), new ArrayList<>());
             }
+
+            serverStatus.put(serverInQuestion, new Date());
+            this.removeUnresponsive();
+
         } catch (Exception e) {
+            e.printStackTrace();
     	}
+    }
+
+    public void serverInQuestionHandler(MessageServerInQuestion message) {
+        try {
+            ServerInfo serverInQuestion;
+            serverInQuestion = new ServerInfo(message.getRemoteHost(), message.getRemotePort());
+            ServerInfo originator = new ServerInfo(remoteIP, message.getLocalPort());
+
+            if (!serverStatus.containsKey(serverInQuestion)) {
+                ArrayList<ServerInfo> exempt = new ArrayList<>();
+                exempt.add(originator);
+                exempt.add(serverInQuestion);
+                MessageServerInQuestion replyMessage = new MessageServerInQuestion(
+                        localPort, message.getRemoteHost(), message.getRemotePort());
+                this.broadcastHeartbeat(gson.toJson(replyMessage), exempt);
+
+            }
+
+            serverStatus.put(serverInQuestion, new Date());
+            serverStatus.put(originator, new Date());
+            this.removeUnresponsive();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 //Helper Functions//--------------------------
@@ -352,7 +281,7 @@ public class BlockchainServerRunnable implements Runnable{
     public void removeUnresponsive() {
     	//check for servers that havent responded in 4 secs
         for (ServerInfo server: serverStatus.keySet()) {
-            if (new Date().getTime() - serverStatus.get(server).getTime() > 4000) {
+            if (new Date().getTime() - serverStatus.get(server).getTime() > REMOTE_SERVER_TIMEOUT) {
             	serverStatus.remove(server);
             	System.out.println("removed " + server.getHost());
             }

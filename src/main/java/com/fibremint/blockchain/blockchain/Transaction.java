@@ -1,4 +1,4 @@
-package com.fibremint.blockchain.message;
+package com.fibremint.blockchain.blockchain;
 
 import java.io.Serializable;
 

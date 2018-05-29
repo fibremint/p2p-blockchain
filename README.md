@@ -11,6 +11,6 @@ Given some skeleton files provided by the course coordinators, I implemented:
    * Heratbeat receving and server info sending
    * Server info receiving and server info relaying
 2. Catchup protocol and Blockchain Consensus
-   * Latest block message sending
-   * Catchup message sending
+   * Latest block messages sending
+   * Catchup messages sending
    * Server catchup algorithm

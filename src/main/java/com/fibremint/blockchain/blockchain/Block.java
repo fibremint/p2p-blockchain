@@ -1,6 +1,7 @@
 package com.fibremint.blockchain.blockchain;
 
-import com.fibremint.blockchain.message.Transaction;
+import com.fibremint.blockchain.message.model.MessageTransaction;
+import com.google.gson.Gson;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -17,9 +18,11 @@ public class Block implements Serializable {
     private byte[] previousHash;
     private byte[] currentHash;
     private ArrayList<Transaction> transactions;
+    private Gson gson;
 
     public Block() {
         transactions = new ArrayList<>();
+        gson = new Gson();
     }
 
     public byte[] getPreviousHash() {
@@ -67,7 +70,8 @@ public class Block implements Serializable {
             DataOutputStream out = new DataOutputStream(baout);
             out.write(previousHash);
             for (Transaction tx : transactions) {
-                out.writeUTF("tx|" + tx.getSender() + "|" + tx.getContent());
+                out.writeUTF(gson.toJson(new MessageTransaction(tx.getSender(), tx.getContent())));
+                //out.writeUTF("tx|" + tx.getSender() + "|" + tx.getContent());
             }
             byte[] bytes = baout.toByteArray();
             return digest.digest(bytes);
@@ -86,7 +90,8 @@ public class Block implements Serializable {
             out.write(nonce);
             out.write(previousHash);
             for (Transaction tx : transactions) {
-                out.writeUTF("tx|" + tx.getSender() + "|" + tx.getContent());
+                out.writeUTF(gson.toJson(new MessageTransaction(tx.getSender(), tx.getContent())));
+                //out.writeUTF("tx|" + tx.getSender() + "|" + tx.getContent());
             }
             byte[] bytes = baout.toByteArray();
             return digest.digest(bytes);

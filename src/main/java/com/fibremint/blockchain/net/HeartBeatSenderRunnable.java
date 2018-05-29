@@ -1,18 +1,25 @@
 package com.fibremint.blockchain.net;
 
+import com.fibremint.blockchain.message.model.MessageHeartbeat;
+import com.google.gson.Gson;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
 public class HeartBeatSenderRunnable implements Runnable{
+    public static final int HEARTBEAT_TIMEOUT = 2000;
 
     private ServerInfo destServer;
-    private String message;
+    private MessageHeartbeat message;
+    private Gson gson;
 
-    public HeartBeatSenderRunnable(ServerInfo destServer, String message) {
+    public HeartBeatSenderRunnable(ServerInfo destServer, MessageHeartbeat message) {
         this.destServer = destServer;
         this.message = message;
+
+        gson = new Gson();
     }
 
     @Override
@@ -20,11 +27,11 @@ public class HeartBeatSenderRunnable implements Runnable{
         try {
             // create socket with a timeout of 2 seconds
             Socket s = new Socket();
-            s.connect(new InetSocketAddress(this.destServer.getHost(), this.destServer.getPort()), 2000);
+            s.connect(new InetSocketAddress(this.destServer.getHost(), this.destServer.getPort()), HEARTBEAT_TIMEOUT);
             PrintWriter pw =  new PrintWriter(s.getOutputStream(), true);
             
             // send the message forward
-        	pw.println(message);
+        	pw.println(gson.toJson(message));
         	pw.flush();
 
             // close printWriter and socket

@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.Collections;
 
 public class PeriodicCatchupRunnable implements Runnable {
+    public static final int THREAD_SLEEP = 2000;
+
 	private Blockchain blockchain;
 	private HashMap<ServerInfo, Date> serverStatus;
 	private int localPort;
@@ -58,7 +60,7 @@ public class PeriodicCatchupRunnable implements Runnable {
 
 			//sleep for 2 secs
 			try {
-				Thread.sleep(2000);
+				Thread.sleep(THREAD_SLEEP);
 			} catch (Exception e) {
 			}
 		}

@@ -1,6 +1,5 @@
 package com.fibremint.blockchain.blockchain;
 
-import com.fibremint.blockchain.message.Transaction;
 import com.fibremint.blockchain.message.model.MessageTransaction;
 
 import java.util.ArrayList;
