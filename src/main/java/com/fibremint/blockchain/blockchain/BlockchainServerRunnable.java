@@ -66,7 +66,7 @@ public class BlockchainServerRunnable implements Runnable{
 
                 jsonElement = jsonParser.parse(inputLine);
 
-        		messageType = jsonElement.getAsJsonObject().get("Type").getAsString();
+        		messageType = jsonElement.getAsJsonObject().get("type").getAsString();
         		switch (MessageType.valueOf(messageType)) {
                     case catchUp:
                         catchUpHandler(gson.fromJson(jsonElement, MessageCatchUp.class));
@@ -94,7 +94,7 @@ public class BlockchainServerRunnable implements Runnable{
         	}
             clientSocket.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
     }
 
