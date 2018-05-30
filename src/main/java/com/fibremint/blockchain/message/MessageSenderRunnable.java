@@ -26,6 +26,7 @@ public class MessageSenderRunnable implements Runnable{
             PrintWriter pw =  new PrintWriter(s.getOutputStream(), true);
             
             // send the message forward
+            System.out.println(message);
         	pw.println(message);
         	pw.flush();
 

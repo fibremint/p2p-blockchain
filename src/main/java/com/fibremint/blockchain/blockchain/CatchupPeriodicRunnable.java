@@ -10,14 +10,14 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Collections;
 
-public class PeriodicCatchupRunnable implements Runnable {
+public class CatchupPeriodicRunnable implements Runnable {
     public static final int THREAD_SLEEP = 2000;
 
 	private Blockchain blockchain;
 	private HashMap<ServerInfo, Date> serverStatus;
 	private int localPort;
 	
-	public PeriodicCatchupRunnable(Blockchain blockchain, HashMap<ServerInfo, Date> serverStatus, int localPort) {
+	public CatchupPeriodicRunnable(Blockchain blockchain, HashMap<ServerInfo, Date> serverStatus, int localPort) {
 		this.blockchain = blockchain;
 		this.serverStatus = serverStatus;
 		this.localPort = localPort;

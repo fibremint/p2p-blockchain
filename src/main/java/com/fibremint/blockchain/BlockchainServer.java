@@ -3,8 +3,8 @@ package com.fibremint.blockchain;
 import com.fibremint.blockchain.blockchain.Blockchain;
 import com.fibremint.blockchain.message.MessageHandlerRunnable;
 import com.fibremint.blockchain.net.HeartBeatPeriodicRunnable;
-import com.fibremint.blockchain.blockchain.PeriodicCatchupRunnable;
-import com.fibremint.blockchain.blockchain.PeriodicCommitRunnable;
+import com.fibremint.blockchain.blockchain.CatchupPeriodicRunnable;
+import com.fibremint.blockchain.blockchain.CommitPeriodicRunnable;
 import com.fibremint.blockchain.net.ServerInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +40,7 @@ public class BlockchainServer {
         HashMap<ServerInfo, Date> remoteServerStatus = new HashMap<ServerInfo, Date>();
         remoteServerStatus.put(new ServerInfo(remoteHost, remotePort), new Date());
 
-        PeriodicCommitRunnable pcr = new PeriodicCommitRunnable(blockchain);
+        CommitPeriodicRunnable pcr = new CommitPeriodicRunnable(blockchain);
         Thread pct = new Thread(pcr);
         pct.start();
         
@@ -48,7 +48,7 @@ public class BlockchainServer {
         new Thread(new HeartBeatPeriodicRunnable(remoteServerStatus, localPort)).start();
         
         //periodically catchup
-        new Thread(new PeriodicCatchupRunnable(blockchain, remoteServerStatus, localPort)).start();
+        new Thread(new CatchupPeriodicRunnable(blockchain, remoteServerStatus, localPort)).start();
         
         ServerSocket serverSocket = null;
         try {

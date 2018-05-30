@@ -4,14 +4,14 @@ import com.fibremint.blockchain.blockchain.Blockchain;
 
 import java.security.SecureRandom;
 
-public class PeriodicCommitRunnable implements Runnable{
+public class CommitPeriodicRunnable implements Runnable{
 
     private volatile boolean isRunning;
     private int nonce;
     private Blockchain blockchain;
     private SecureRandom randomGenerator;
 
-    public PeriodicCommitRunnable(Blockchain blockchain) {
+    public CommitPeriodicRunnable(Blockchain blockchain) {
         isRunning = true;
         this.blockchain = blockchain;
         randomGenerator = new SecureRandom();
