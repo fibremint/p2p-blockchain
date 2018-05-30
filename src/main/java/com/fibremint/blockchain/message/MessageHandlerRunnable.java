@@ -1,5 +1,7 @@
-package com.fibremint.blockchain.blockchain;
+package com.fibremint.blockchain.message;
 
+import com.fibremint.blockchain.blockchain.Block;
+import com.fibremint.blockchain.blockchain.Blockchain;
 import com.fibremint.blockchain.message.MessageSenderRunnable;
 import com.fibremint.blockchain.message.model.*;
 import com.fibremint.blockchain.net.ServerInfo;
@@ -17,7 +19,7 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 
-public class BlockchainServerRunnable implements Runnable{
+public class MessageHandlerRunnable implements Runnable{
     private static final int REMOTE_SERVER_TIMEOUT = 4000;
 
     private Socket clientSocket;
@@ -27,13 +29,12 @@ public class BlockchainServerRunnable implements Runnable{
     private int localPort;
     private Gson gson;
 
-    public BlockchainServerRunnable(Socket clientSocket, Blockchain blockchain, HashMap<ServerInfo, Date> serverStatus, int localPort) {
+    public MessageHandlerRunnable(Socket clientSocket, Blockchain blockchain, HashMap<ServerInfo, Date> serverStatus, int localPort) {
         this.clientSocket = clientSocket;
         this.blockchain = blockchain;
         this.serverStatus = serverStatus;
         this.localPort = localPort;
 
-        // TODO: register MessagePrintBlock
         RuntimeTypeAdapterFactory<MessageBase> messageAdapterFactory = RuntimeTypeAdapterFactory
                 .of(MessageBase.class, "Type")
                 .registerSubtype(MessageCatchUp.class, "catchUp")
@@ -88,7 +89,7 @@ public class BlockchainServerRunnable implements Runnable{
                         this.serverInQuestionHandler(gson.fromJson(jsonElement, MessageServerInQuestion.class));
                         break;
         			default:
-                       	outWriter.print("Error\n\n");
+                       	outWriter.print(gson.toJson(new MessageResult(MessageResult.Type.denied)));
                        	outWriter.flush();
         		}
         	}

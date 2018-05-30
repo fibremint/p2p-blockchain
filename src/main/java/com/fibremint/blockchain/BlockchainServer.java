@@ -1,7 +1,7 @@
 package com.fibremint.blockchain;
 
 import com.fibremint.blockchain.blockchain.Blockchain;
-import com.fibremint.blockchain.blockchain.BlockchainServerRunnable;
+import com.fibremint.blockchain.message.MessageHandlerRunnable;
 import com.fibremint.blockchain.net.HeartBeatPeriodicRunnable;
 import com.fibremint.blockchain.blockchain.PeriodicCatchupRunnable;
 import com.fibremint.blockchain.blockchain.PeriodicCommitRunnable;
@@ -55,7 +55,7 @@ public class BlockchainServer {
             serverSocket = new ServerSocket(localPort);
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                new Thread(new BlockchainServerRunnable(clientSocket, blockchain, remoteServerStatus, localPort)).start();
+                new Thread(new MessageHandlerRunnable(clientSocket, blockchain, remoteServerStatus, localPort)).start();
                 //new Thread(new HeartBeatReceiverRunnable(clientSocket, remoteServerStatus, localPort)).start();
                 
             }
