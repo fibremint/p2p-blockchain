@@ -2,7 +2,6 @@ package com.fibremint.blockchain.message;
 
 import com.fibremint.blockchain.blockchain.Block;
 import com.fibremint.blockchain.blockchain.Blockchain;
-import com.fibremint.blockchain.message.MessageSenderRunnable;
 import com.fibremint.blockchain.message.model.*;
 import com.fibremint.blockchain.net.ServerInfo;
 import com.fibremint.blockchain.util.RuntimeTypeAdapterFactory;
@@ -14,10 +13,7 @@ import com.google.gson.JsonParser;
 import java.io.*;
 import java.net.Socket;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Date;
-import java.util.HashMap;
+import java.util.*;
 
 public class MessageHandlerRunnable implements Runnable{
     private static final int REMOTE_SERVER_TIMEOUT = 4000;
@@ -62,7 +58,6 @@ public class MessageHandlerRunnable implements Runnable{
 
         		if (inputLine == null) {
                     break;
-
                 }
 
                 jsonElement = jsonParser.parse(inputLine);
@@ -73,7 +68,7 @@ public class MessageHandlerRunnable implements Runnable{
                         catchUpHandler(gson.fromJson(jsonElement, MessageCatchUp.class));
                         break;
                     case heartbeat:
-                        this.heartBeatHandler(gson.fromJson(jsonElement, MessageHeartbeat.class));
+                        this.heartbeatHandler(gson.fromJson(jsonElement, MessageHeartbeat.class));
                         break;
                     case lastBlock:
                         if (this.lastBlockHandler(gson.fromJson(jsonElement, MessageLastBlock.class))) {
@@ -89,7 +84,7 @@ public class MessageHandlerRunnable implements Runnable{
                         this.serverInQuestionHandler(gson.fromJson(jsonElement, MessageServerInQuestion.class));
                         break;
         			default:
-                       	outWriter.print(gson.toJson(new MessageResult(MessageResult.Type.denied)));
+                       	outWriter.print(gson.toJson(new MessageResult(MessageResult.Type.error)));
                        	outWriter.flush();
         		}
         	}
@@ -232,11 +227,12 @@ public class MessageHandlerRunnable implements Runnable{
 		}
 	}
 
-    public void heartBeatHandler(MessageHeartbeat message) {
+    public void heartbeatHandler(MessageHeartbeat message) {
         ServerInfo serverInQuestion;
 
         try {	
-            String remoteIP = (((InetSocketAddress) clientSocket.getRemoteSocketAddress()).getAddress()).toString().replace("/", "");
+            String remoteIP = (((InetSocketAddress) clientSocket.getRemoteSocketAddress()).getAddress()).toString()
+                    .replace("/", "");
             serverInQuestion = new ServerInfo(remoteIP, message.getLocalPort());
 
             if (!serverStatus.containsKey(serverInQuestion)) {
