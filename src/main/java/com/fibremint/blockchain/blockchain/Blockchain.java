@@ -1,105 +1,40 @@
 package com.fibremint.blockchain.blockchain;
 
-import com.fibremint.blockchain.message.model.MessageTransaction;
-
+import java.security.Security;
 import java.util.ArrayList;
-import java.util.Base64;
+import java.util.HashMap;
 
 public class Blockchain {
+    public static ArrayList<Block> blockchain = new ArrayList<>();
+    public static HashMap<String, TransactionOutput> UTXOs = new HashMap<>();
 
-    private Block head;
-    private ArrayList<Transaction> pool;
-    private int length;
+    public static int difficulty = 3;
+    public static float minimumTransaction = 0.1f;
+
 
     public Blockchain() {
-        pool = new ArrayList<>();
-        length = 0;
+        Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
     }
 
-    public synchronized Block getHead() {
-        return head;
-    }
+    /*
+        public static boolean isChainValid() {
+            Block currentBlock, previousBlock;
+            String hashTarget = new String(new char[difficulty]).replace('\0', '0');
+            HashMap<String ,TransactionOutput> tempUTXOs = new HashMap<>();
+            tempUTXOs.put()
+            for(int i=1; i < blockchain.size(); i++) {
+                currentBlock = blockchain.get(i);
+                previousBlock = blockchain.get(i-1);
 
-    public synchronized void setHead(Block head) {
-        this.head = head;
-    }
+                if (!currentBlock.hash.equals(currentBlock.calculateHash())
+                        || !previousBlock.hash.equals((currentBlock.getHeader().previousHash)))
+                    return false;
+            }
 
-    public synchronized int getLength() {
-        return length;
-    }
-
-    public synchronized void setLength(int length) {
-        this.length = length;
-    }
-
-    public synchronized ArrayList<Transaction> getPool() {
-        return pool;
-    }
-
-    public synchronized void setPool(ArrayList<Transaction> pool) {
-        this.pool = pool;
-    }
-
-    public synchronized boolean addTransaction(MessageTransaction message) {
-        //String[] tokens = txString.split("\\|");
-        /*if (tokens.length != 3) {
-            return false;
-        }
-        if (!tokens[0].equals("tx")) {
-            return false;
-        }*/
-        Transaction transaction = new Transaction();
-        transaction.setSender(message.getSender());
-        transaction.setContent(message.getContent());
-        if (!transaction.isValid()) {
-            return false;
-        }
-        pool.add(transaction);
-        return true;
-    }
-
-    public synchronized boolean commit(int nonce) {
-        if (pool.size() == 0) {
-            return false;
-        }
-
-        Block newBlock = new Block();
-        if (head == null) {
-            newBlock.setPreviousHash(new byte[32]);
-        } else {
-            newBlock.setPreviousHash(head.calculateHash());
-        }
-        newBlock.setTransactions(pool);
-        byte[] hash = newBlock.calculateHashWithNonce(nonce);
-        String hashString = Base64.getEncoder().encodeToString(hash);
-        if(hashString.startsWith("A")) {
-            newBlock.setPreviousBlock(head);
-            head = newBlock;
-            pool = new ArrayList<>();
-            length += 1;
             return true;
-        }
-        return false;
-    }
-
-    public synchronized String toString() {
-        String cutOffRule = new String(new char[81]).replace("\0", "-") + "\n";
-        String poolString = "";
-        for (Transaction tx : pool) {
-            poolString += tx.toString();
-        }
-
-        String blockString = "";
-        Block bl = head;
-        while (bl != null) {
-            blockString += bl.toString();
-            bl = bl.getPreviousBlock();
-        }
-
-        return "Pool:\n"
-                + cutOffRule
-                + poolString
-                + cutOffRule
-                + blockString;
+        }*/
+    public static void addBlock(Block newBlock) {
+        newBlock.mineBlock(difficulty);
+        blockchain.add(newBlock);
     }
 }

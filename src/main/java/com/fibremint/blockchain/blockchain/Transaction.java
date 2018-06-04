@@ -1,75 +1,102 @@
 package com.fibremint.blockchain.blockchain;
 
+import com.fibremint.blockchain.util.StringUtil;
+
 import java.io.Serializable;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.util.ArrayList;
 
-public class Transaction implements Serializable{
-    private static final String SENDER_REGEX = "^[a-z]{4}[0-9]{4}$";
-    private String sender;
-    private String content;
-    private boolean isValid;
+public class Transaction {
+    public String transactionHash;
+    public PublicKey sender;
+    public PublicKey reciepient;
+    public float value;
+    public byte[] signature;
+    public ArrayList<TransactionInput> inputs;
+    public ArrayList<TransactionOutput> outputs;
 
-    public Transaction() {
-        isValid = false;
-    }
+    private static int sequence = 0;
 
-    public String getSender() {
-        return sender;
-    }
+    public Transaction(PublicKey sender, PublicKey reciepient, float value, ArrayList<TransactionInput> inputs) {
+        this.outputs = new ArrayList<>();
 
-    public void setSender(String sender) {
         this.sender = sender;
-        isValid = validate();
+        this.reciepient = reciepient;
+        this.value = value;
+        this.inputs = inputs;
     }
 
-    public String getContent() {
-        return content;
-    }
+    public boolean processTransaction() {
+        if (!verifySignature()) {
+            System.out.println("#Transaction signature failed to verify");
+            return false;
+        }
 
-    public void setContent(String content) {
-        this.content = content;
-        isValid = validate();
-    }
+        for (TransactionInput i : inputs)
+            i.UTXO = Blockchain.UTXOs.get(i.transactionOutputHash);
 
-    public String toString() {
-        if (isValid) {
-            return String.format("|%s|%70s|\n", sender, content);
+        if (getInputsValue() < Blockchain.minimumTransaction) {
+            System.out.println("Transaction inputs too small: " + getInputsValue());
+            System.out.println("Please enter the amount greater than " + Blockchain.minimumTransaction);
+            return false;
         }
-        return null;
-    }
 
-    @Override
-    public boolean equals(Object other) {
-        if (!isValid) {
-            return false;
-        }
-        if (other == null) {
-            return false;
-        }
-        if (getClass() != other.getClass()) {
-            return false;
-        }
-        Transaction tx = (Transaction) other;
-        if (content.equals(tx.getContent()) && sender.equals(tx.getSender())) {
-            return true;
-        }
-        return false;
-    }
+        float leftOver = getInputsValue() - value;
+        transactionHash = calculateHash();
+        outputs.add(new TransactionOutput(this.reciepient, value, transactionHash));
+        outputs.add(new TransactionOutput(this.sender, leftOver, transactionHash));
 
-    private boolean validate() {
-        if (sender == null || content == null) {
-            return false;
+        for (TransactionOutput o : outputs)
+            Blockchain.UTXOs.put(o.hash, o);
+
+        for (TransactionInput i : inputs) {
+            if (i.UTXO == null) continue;;
+            Blockchain.UTXOs.remove(i.UTXO.hash);
         }
-        if (!sender.matches(SENDER_REGEX)) {
-            return false;
-        }
-        if (content.contains("\\|") || content.length() > 70) {
-            return false;
-        }
+
         return true;
     }
 
-    public boolean isValid() {
-        return isValid;
+    public float getInputsValue() {
+        float total = 0;
+        for(TransactionInput i : inputs) {
+            if (i.UTXO == null) continue;;
+            total += i.UTXO.value;
+        }
+
+        return total;
+    }
+
+    public float getOutputsValue() {
+        float total = 0;
+        for(TransactionOutput o : outputs)
+            total += o.value;
+
+        return total;
+    }
+
+    private String calculateHash() {
+        sequence++;
+        return StringUtil.applySHA256(
+                StringUtil.getStringFromKey(sender) +
+                        StringUtil.getStringFromKey(reciepient) +
+                        Float.toString(value) + sequence
+        );
+    }
+
+    public void generateSignature(PrivateKey privateKey) {
+        String data = StringUtil.getStringFromKey(sender) +
+                StringUtil.getStringFromKey(reciepient) +
+                Float.toString(value);
+        this.signature = StringUtil.applyECDSASignature(privateKey, data);
+    }
+
+    public boolean verifySignature() {
+        String data = StringUtil.getStringFromKey(sender) +
+                StringUtil.getStringFromKey(reciepient) +
+                Float.toString(value);
+        return StringUtil.verifyECDSASignature(sender, data, signature);
     }
 
 }

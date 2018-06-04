@@ -1,5 +1,6 @@
-package com.fibremint.blockchain.blockchain;
+package com.fibremint.blockchain.net;
 
+import com.fibremint.blockchain.blockchain.Blockchain;
 import com.fibremint.blockchain.message.MessageSenderRunnable;
 import com.fibremint.blockchain.message.model.MessageLastBlock;
 import com.fibremint.blockchain.net.ServerInfo;

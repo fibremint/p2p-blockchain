@@ -1,4 +1,4 @@
-package com.fibremint.blockchain.blockchain;
+package com.fibremint.blockchain.net;
 
 import com.fibremint.blockchain.blockchain.Blockchain;
 
