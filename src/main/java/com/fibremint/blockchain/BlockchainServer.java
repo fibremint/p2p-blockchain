@@ -1,5 +1,6 @@
 package com.fibremint.blockchain;
 
+import com.fibremint.blockchain.blockchain.*;
 import com.fibremint.blockchain.message.MessageHandlerRunnable;
 import com.fibremint.blockchain.net.HeartBeatPeriodicRunnable;
 import com.fibremint.blockchain.net.CatchupPeriodicRunnable;
@@ -10,12 +11,15 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.Security;
 import java.util.Date;
 import java.util.HashMap;
 
 public class BlockchainServer {
 
     public static void main(String[] args) {
+        Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+
         Logger logger = LoggerFactory.getLogger(BlockchainServer.class);
         if (args.length != 3) {
             return;
@@ -33,6 +37,22 @@ public class BlockchainServer {
             e.printStackTrace();
         }
         logger.info("Block chain server started");
+
+        Wallet walletA = new Wallet();
+        Wallet coinbase = new Wallet();
+        Transaction genesisTransaction = new Transaction(coinbase.publicKey, walletA.publicKey, 100f, null);
+        genesisTransaction.generateSignature(coinbase.privateKey);
+        genesisTransaction.hash = "0";
+        genesisTransaction.outputs.add(new TransactionOutput(
+                genesisTransaction.recipient,
+                genesisTransaction.value,
+                genesisTransaction.hash));
+
+        Block genesis = new Block(new BlockHeader("0"));
+        genesis.mineBlock(Blockchain.difficulty);
+        Blockchain.blockchain.add(genesis);
+
+
 
         HashMap<ServerInfo, Date> remoteServerStatus = new HashMap<>();
         remoteServerStatus.put(new ServerInfo(remoteHost, remotePort), new Date());
