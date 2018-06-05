@@ -20,7 +20,7 @@ public class Blockchain {
     }
 
     public static int getLength() {
-        return blockchain.size() -1;
+        return blockchain.size();
     }
 
     public static synchronized void catchUp(ArrayList<Block> blocks) {
