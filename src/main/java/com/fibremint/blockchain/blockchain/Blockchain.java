@@ -16,7 +16,7 @@ public class Blockchain {
     }
 
     public static Block getLatestBlock() {
-        return blockchain.get(blockchain.size() - 1);
+        return (blockchain.size() == 0) ? null : blockchain.get(blockchain.size() - 1);
     }
 
     public static int getLength() {
