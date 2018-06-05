@@ -1,6 +1,6 @@
 package com.fibremint.blockchain.blockchain;
 
-import com.fibremint.blockchain.util.StringUtil;
+import com.fibremint.blockchain.util.HashUtil;
 
 import java.util.ArrayList;
 
@@ -22,8 +22,8 @@ public class Block {
     }
 
     public void mineBlock(int difficulty) {
-        header.merkleRootHash = StringUtil.getMerkleRoot(transactions);
-        String target = StringUtil.getDifficultyString(difficulty);
+        header.merkleRootHash = HashUtil.getMerkleRoot(transactions);
+        String target = HashUtil.getDifficultyString(difficulty);
         while(!header.hash.substring(0, difficulty).equals(target)) {
             header.nonce++;
             header.hash = header.calculateHash();

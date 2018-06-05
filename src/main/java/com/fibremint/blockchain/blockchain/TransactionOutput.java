@@ -1,26 +1,26 @@
 package com.fibremint.blockchain.blockchain;
 
-import com.fibremint.blockchain.util.StringUtil;
+import com.fibremint.blockchain.util.HashUtil;
 
 import java.security.PublicKey;
 
 public class TransactionOutput {
     public String hash;
-    public PublicKey reciepient;
+    public PublicKey recipient;
     public float value;
     public String parentTransactionHash;
 
-    public TransactionOutput(PublicKey reciepient, float value, String parentTransactionHash) {
-        this.reciepient = reciepient;
+    public TransactionOutput(PublicKey recipient, float value, String parentTransactionHash) {
+        this.recipient = recipient;
         this.value = value;
         this.parentTransactionHash = parentTransactionHash;
-        this.hash = StringUtil.applySHA256(
-                StringUtil.getStringFromKey(reciepient) +
+        this.hash = HashUtil.applySHA256(
+                HashUtil.getStringFromKey(recipient) +
                         Float.toString(value) +
                         parentTransactionHash);
     }
 
     public boolean isMine(PublicKey publicKey) {
-        return publicKey == reciepient;
+        return publicKey == recipient;
     }
 }

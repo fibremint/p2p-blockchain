@@ -17,6 +17,7 @@ public class Wallet {
         generateKeyPair();
     }
 
+    // TODO: check key is valid
     public Wallet(PrivateKey privateKey, PublicKey publicKey) {
         this.privateKey = privateKey;
         this.publicKey = publicKey;
@@ -36,6 +37,24 @@ public class Wallet {
             throw new RuntimeException(e);
         }
     }
+    /*@Override
+    public PrivateKey generatePrivateKey(byte[] keyBin) throws InvalidKeySpecException, NoSuchAlgorithmException {
+        ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
+        KeyFactory kf = KeyFactory.getInstance("ECDSA", new BouncyCastleProvider());
+        ECNamedCurveSpec params = new ECNamedCurveSpec("secp256k1", spec.getCurve(), spec.getG(), spec.getN());
+        ECPrivateKeySpec privKeySpec = new ECPrivateKeySpec(new BigInteger(keyBin), params);
+        return kf.generatePrivate(privKeySpec);
+    }
+
+    @Override
+    public PublicKey generatePublicKey(byte[] keyBin) throws InvalidKeySpecException, NoSuchAlgorithmException {
+        ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
+        KeyFactory kf = KeyFactory.getInstance("ECDSA", new BouncyCastleProvider());
+        ECNamedCurveSpec params = new ECNamedCurveSpec("secp256k1", spec.getCurve(), spec.getG(), spec.getN());
+        ECPoint point =  ECPointUtil.decodePoint(params.getCurve(), keyBin);
+        ECPublicKeySpec pubKeySpec = new ECPublicKeySpec(point, params);
+        return kf.generatePublic(pubKeySpec);
+    }*/
 
     public float getBalance() {
         float total = 0;
@@ -68,9 +87,8 @@ public class Wallet {
         Transaction newTransaction = new Transaction(publicKey, recipient, value, inputs);
         newTransaction.generateSignature(privateKey);
 
-        for (TransactionInput input : inputs) {
+        for (TransactionInput input : inputs)
             UTXOs.remove(input.transactionOutputHash);
-        }
 
         return newTransaction;
     }

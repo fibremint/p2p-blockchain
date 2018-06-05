@@ -1,7 +1,6 @@
 package com.fibremint.blockchain.blockchain;
 
-import com.fibremint.blockchain.util.StringUtil;
-import com.google.gson.Gson;
+import com.fibremint.blockchain.util.HashUtil;
 
 import java.util.Date;
 
@@ -19,6 +18,15 @@ public class BlockHeader {
         this.timestamp = new Date().getTime();
 
         this.hash = calculateHash();
+    }
+
+    public BlockHeader(String hash, String previousHash, String merkleRootHash, long timestamp, int nonce) {
+        this.version = 1;
+        this.hash = hash;
+        this.previousHash = previousHash;
+        this.merkleRootHash = merkleRootHash;
+        this.timestamp = timestamp;
+        this.nonce = nonce;
     }
 
     /*public int getVersion() {
@@ -49,7 +57,7 @@ public class BlockHeader {
     }*/
 
     public String calculateHash() {
-        return StringUtil.applySHA256(
+        return HashUtil.applySHA256(
                 previousHash +
                         Long.toString(timestamp) +
                         Integer.toString(nonce) +
@@ -58,7 +66,7 @@ public class BlockHeader {
     }
 
     /*public void calculateHash() {
-        this.hash =  StringUtil.applySHA256(header.getAsSerialized() + new Gson().toJson(transactions));
+        this.hash =  HashUtil.applySHA256(header.getAsSerialized() + new Gson().toJson(transactions));
     }*/
 
 

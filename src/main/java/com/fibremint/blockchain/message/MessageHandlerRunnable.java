@@ -2,6 +2,7 @@ package com.fibremint.blockchain.message;
 
 import com.fibremint.blockchain.blockchain.Block;
 import com.fibremint.blockchain.blockchain.Blockchain;
+import com.fibremint.blockchain.blockchain.Transaction;
 import com.fibremint.blockchain.message.model.*;
 import com.fibremint.blockchain.net.ServerInfo;
 import com.fibremint.blockchain.util.RuntimeTypeAdapterFactory;
@@ -61,7 +62,7 @@ public class MessageHandlerRunnable implements Runnable{
                 }
 
                 jsonElement = jsonParser.parse(inputLine);
-
+        		// TODO: move catchUp, heartBeat, latestBlock, serverInQuestion to network related message handler
         		messageType = jsonElement.getAsJsonObject().get("type").getAsString();
         		switch (MessageType.valueOf(messageType)) {
                     case catchUp:
@@ -77,9 +78,9 @@ public class MessageHandlerRunnable implements Runnable{
                     case transaction:
         				this.transactionHandler(gson.fromJson(jsonElement, MessageTransaction.class), outWriter);
         				break;
-                    case printBlock:
+                    /*case printBlock:
         				this.printBlockHandler(outWriter);
-        				break;
+        				break;*/
                     case serverInQuestion:
                         this.serverInQuestionHandler(gson.fromJson(jsonElement, MessageServerInQuestion.class));
                         break;
@@ -195,9 +196,9 @@ public class MessageHandlerRunnable implements Runnable{
     }
 
     public void transactionHandler(MessageTransaction message, PrintWriter outWriter) {
-        MessageTransaction transaction;
+        Transaction transaction = new Transaction(message.g)
         try {
-    		if (this.blockchain.addTransaction(message))
+    		if (this.blockchain.getBlock().addTransaction(transaction))
                 outWriter.print(gson.toJson(new MessageResult(MessageResult.Type.accepted)));
     		else
                 outWriter.print(gson.toJson(new MessageResult(MessageResult.Type.denied)));
@@ -208,7 +209,7 @@ public class MessageHandlerRunnable implements Runnable{
 		}
 	}
 
-	public void printBlockHandler(PrintWriter outWriter) {
+/*	public void printBlockHandler(PrintWriter outWriter) {
     	try {
     		outWriter.print(blockchain.toString() + "\n");
     		System.out.println(blockchain.toString() + "\n");
@@ -216,7 +217,7 @@ public class MessageHandlerRunnable implements Runnable{
 		} catch (Exception e) {
     		e.printStackTrace();
 		}
-	}
+	}*/
 
     public void heartbeatHandler(MessageHeartbeat message) {
         ServerInfo serverInQuestion;

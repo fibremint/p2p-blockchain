@@ -4,10 +4,11 @@ import com.fibremint.blockchain.blockchain.Transaction;
 
 import java.io.UnsupportedEncodingException;
 import java.security.*;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Base64;
 
-public class StringUtil {
+public class HashUtil {
     public static String applySHA256(String input) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -79,6 +80,20 @@ public class StringUtil {
 
     public static String getStringFromKey(Key key) {
         return Base64.getEncoder().encodeToString(key.getEncoded());
+    }
+
+    public static byte[] getByteArrayFromString(String string) {
+        return Base64.getDecoder().decode(string);
+    }
+
+    public static PublicKey getPublicKeyFromString(String key) {
+        try {
+            KeyFactory keyFactory = KeyFactory.getInstance("ECDSA", "BC");
+            return keyFactory.generatePublic(new X509EncodedKeySpec(getByteArrayFromString(key)));
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static String getDifficultyString(int difficulty) {

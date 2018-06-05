@@ -1,8 +1,6 @@
 package com.fibremint.blockchain.message.model;
 
-import com.fibremint.blockchain.util.StringUtil;
-
-import java.util.Base64;
+import com.fibremint.blockchain.util.HashUtil;
 
 public class MessageLastBlock extends MessageBase {
     public int localPort;
@@ -28,6 +26,6 @@ public class MessageLastBlock extends MessageBase {
     }
 
     public void setLatestHash(byte[] latestHash) {
-        this.latestHash = StringUtil.getStringFromByteArray(latestHash);
+        this.latestHash = HashUtil.getStringFromByteArray(latestHash);
     }
 }

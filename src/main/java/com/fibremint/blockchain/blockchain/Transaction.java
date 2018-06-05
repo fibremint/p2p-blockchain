@@ -1,8 +1,7 @@
 package com.fibremint.blockchain.blockchain;
 
-import com.fibremint.blockchain.util.StringUtil;
+import com.fibremint.blockchain.util.HashUtil;
 
-import java.io.Serializable;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
@@ -10,7 +9,7 @@ import java.util.ArrayList;
 public class Transaction {
     public String transactionHash;
     public PublicKey sender;
-    public PublicKey reciepient;
+    public PublicKey recipient;
     public float value;
     public byte[] signature;
     public ArrayList<TransactionInput> inputs;
@@ -18,11 +17,11 @@ public class Transaction {
 
     private static int sequence = 0;
 
-    public Transaction(PublicKey sender, PublicKey reciepient, float value, ArrayList<TransactionInput> inputs) {
+    public Transaction(PublicKey sender, PublicKey recipient, float value, ArrayList<TransactionInput> inputs) {
         this.outputs = new ArrayList<>();
 
         this.sender = sender;
-        this.reciepient = reciepient;
+        this.recipient = recipient;
         this.value = value;
         this.inputs = inputs;
     }
@@ -44,7 +43,7 @@ public class Transaction {
 
         float leftOver = getInputsValue() - value;
         transactionHash = calculateHash();
-        outputs.add(new TransactionOutput(this.reciepient, value, transactionHash));
+        outputs.add(new TransactionOutput(this.recipient, value, transactionHash));
         outputs.add(new TransactionOutput(this.sender, leftOver, transactionHash));
 
         for (TransactionOutput o : outputs)
@@ -78,25 +77,25 @@ public class Transaction {
 
     private String calculateHash() {
         sequence++;
-        return StringUtil.applySHA256(
-                StringUtil.getStringFromKey(sender) +
-                        StringUtil.getStringFromKey(reciepient) +
+        return HashUtil.applySHA256(
+                HashUtil.getStringFromKey(sender) +
+                        HashUtil.getStringFromKey(recipient) +
                         Float.toString(value) + sequence
         );
     }
 
     public void generateSignature(PrivateKey privateKey) {
-        String data = StringUtil.getStringFromKey(sender) +
-                StringUtil.getStringFromKey(reciepient) +
+        String data = HashUtil.getStringFromKey(sender) +
+                HashUtil.getStringFromKey(recipient) +
                 Float.toString(value);
-        this.signature = StringUtil.applyECDSASignature(privateKey, data);
+        this.signature = HashUtil.applyECDSASignature(privateKey, data);
     }
 
     public boolean verifySignature() {
-        String data = StringUtil.getStringFromKey(sender) +
-                StringUtil.getStringFromKey(reciepient) +
+        String data = HashUtil.getStringFromKey(sender) +
+                HashUtil.getStringFromKey(recipient) +
                 Float.toString(value);
-        return StringUtil.verifyECDSASignature(sender, data, signature);
+        return HashUtil.verifyECDSASignature(sender, data, signature);
     }
 
 }
