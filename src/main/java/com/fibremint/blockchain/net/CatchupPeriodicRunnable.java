@@ -2,7 +2,7 @@ package com.fibremint.blockchain.net;
 
 import com.fibremint.blockchain.blockchain.Blockchain;
 import com.fibremint.blockchain.message.MessageSenderRunnable;
-import com.fibremint.blockchain.message.model.MessageLastBlock;
+import com.fibremint.blockchain.message.model.MessageLatestBlock;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
@@ -13,12 +13,10 @@ import java.util.Collections;
 public class CatchupPeriodicRunnable implements Runnable {
     public static final int THREAD_SLEEP = 2000;
 
-	private Blockchain blockchain;
 	private HashMap<ServerInfo, Date> serverStatus;
 	private int localPort;
 	
-	public CatchupPeriodicRunnable(Blockchain blockchain, HashMap<ServerInfo, Date> serverStatus, int localPort) {
-		this.blockchain = blockchain;
+	public CatchupPeriodicRunnable(HashMap<ServerInfo, Date> serverStatus, int localPort) {
 		this.serverStatus = serverStatus;
 		this.localPort = localPort;
 	}
@@ -28,17 +26,20 @@ public class CatchupPeriodicRunnable implements Runnable {
 	    Gson gson = new Gson();
 		while(true) {
 			//String LBmessage = "lb|" + String.valueOf(localPort) + "|" + String.valueOf(blockchain.getLength()) + "|";
-            MessageLastBlock message = new MessageLastBlock(localPort, blockchain.getLength());
-            if (blockchain.getLastBlock() != null) {
-				byte[] latestHash = blockchain.getLastBlock().calculateHash();
+            MessageLatestBlock message = new MessageLatestBlock(localPort, Blockchain.getLength());
+            if (Blockchain.getLatestBlock() != null) {
+				String latestHash = Blockchain.getLatestBlock().getHeader().calculateHash();
 				if (latestHash != null) {
                     //LBmessage += Base64.getEncoder().encodeToString(latestHash);
                     message.setLatestHash(latestHash);
 				} else {
                     //LBmessage += "null";
+                    // Blockchain hasn't any of block
+                    message.setLatestHash("0");
                 }
 			} else {
 				//LBmessage += "null";
+                message.setLatestHash("0");
 			}
 			 
 			

@@ -1,14 +1,13 @@
 package com.fibremint.blockchain.message.model;
 
-import com.fibremint.blockchain.util.HashUtil;
 
-public class MessageLastBlock extends MessageBase {
+public class MessageLatestBlock extends MessageBase {
     public int localPort;
     public int blockchainLength;
     public String latestHash;
 
-    public MessageLastBlock(int localPort, int blockchainLength) {
-        super(MessageType.lastBlock);
+    public MessageLatestBlock(int localPort, int blockchainLength) {
+        super(MessageType.latestBlock);
         this.localPort = localPort;
         this.blockchainLength = blockchainLength;
     }
@@ -25,7 +24,7 @@ public class MessageLastBlock extends MessageBase {
         return latestHash;
     }
 
-    public void setLatestHash(byte[] latestHash) {
-        this.latestHash = HashUtil.getStringFromByteArray(latestHash);
+    public void setLatestHash(String latestHash) {
+        this.latestHash = latestHash;
     }
 }

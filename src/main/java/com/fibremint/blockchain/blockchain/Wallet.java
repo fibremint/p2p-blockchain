@@ -1,5 +1,7 @@
 package com.fibremint.blockchain.blockchain;
 
+import com.fibremint.blockchain.util.HashUtil;
+
 import java.security.*;
 import java.security.spec.ECGenParameterSpec;
 import java.util.ArrayList;
@@ -7,14 +9,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Wallet {
-    private PrivateKey privateKey;
+    public PrivateKey privateKey;
     public PublicKey publicKey;
 
     public HashMap<String, TransactionOutput> UTXOs;
 
     public Wallet() {
         UTXOs = new HashMap<>();
-        generateKeyPair();
+        KeyPair keyPair = HashUtil.generateKeyPair();
+        this.privateKey = keyPair.getPrivate();
+        this.publicKey = keyPair.getPublic();
     }
 
     // TODO: check key is valid
@@ -23,38 +27,6 @@ public class Wallet {
         this.publicKey = publicKey;
     }
 
-    public void generateKeyPair() {
-        try {
-            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("ECDSA", "BC");
-            SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
-            ECGenParameterSpec ecGenParameterSpec = new ECGenParameterSpec("prime192v1");
-            keyPairGenerator.initialize(ecGenParameterSpec, secureRandom);
-
-            KeyPair keyPair = keyPairGenerator.generateKeyPair();
-            privateKey = keyPair.getPrivate();
-            publicKey = keyPair.getPublic();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-    /*@Override
-    public PrivateKey generatePrivateKey(byte[] keyBin) throws InvalidKeySpecException, NoSuchAlgorithmException {
-        ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
-        KeyFactory kf = KeyFactory.getInstance("ECDSA", new BouncyCastleProvider());
-        ECNamedCurveSpec params = new ECNamedCurveSpec("secp256k1", spec.getCurve(), spec.getG(), spec.getN());
-        ECPrivateKeySpec privKeySpec = new ECPrivateKeySpec(new BigInteger(keyBin), params);
-        return kf.generatePrivate(privKeySpec);
-    }
-
-    @Override
-    public PublicKey generatePublicKey(byte[] keyBin) throws InvalidKeySpecException, NoSuchAlgorithmException {
-        ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
-        KeyFactory kf = KeyFactory.getInstance("ECDSA", new BouncyCastleProvider());
-        ECNamedCurveSpec params = new ECNamedCurveSpec("secp256k1", spec.getCurve(), spec.getG(), spec.getN());
-        ECPoint point =  ECPointUtil.decodePoint(params.getCurve(), keyBin);
-        ECPublicKeySpec pubKeySpec = new ECPublicKeySpec(point, params);
-        return kf.generatePublic(pubKeySpec);
-    }*/
 
     public float getBalance() {
         float total = 0;

@@ -3,8 +3,10 @@ package com.fibremint.blockchain.message;
 import com.fibremint.blockchain.blockchain.Block;
 import com.fibremint.blockchain.blockchain.Blockchain;
 import com.fibremint.blockchain.blockchain.Transaction;
+import com.fibremint.blockchain.blockchain.Wallet;
 import com.fibremint.blockchain.message.model.*;
 import com.fibremint.blockchain.net.ServerInfo;
+import com.fibremint.blockchain.util.HashUtil;
 import com.fibremint.blockchain.util.RuntimeTypeAdapterFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -20,15 +22,13 @@ public class MessageHandlerRunnable implements Runnable{
     private static final int REMOTE_SERVER_TIMEOUT = 4000;
 
     private Socket clientSocket;
-    private Blockchain blockchain;
     private HashMap<ServerInfo, Date> serverStatus;
     private String remoteIP;
     private int localPort;
     private Gson gson;
 
-    public MessageHandlerRunnable(Socket clientSocket, Blockchain blockchain, HashMap<ServerInfo, Date> serverStatus, int localPort) {
+    public MessageHandlerRunnable(Socket clientSocket, HashMap<ServerInfo, Date> serverStatus, int localPort) {
         this.clientSocket = clientSocket;
-        this.blockchain = blockchain;
         this.serverStatus = serverStatus;
         this.localPort = localPort;
 
@@ -36,7 +36,7 @@ public class MessageHandlerRunnable implements Runnable{
                 .of(MessageBase.class, "Type")
                 .registerSubtype(MessageCatchUp.class, "catchUp")
                 .registerSubtype(MessageHeartbeat.class, "heartbeat")
-                .registerSubtype(MessageLastBlock.class, "lastBlock")
+                .registerSubtype(MessageLatestBlock.class, "latestBlock")
                 .registerSubtype(MessageTransaction.class, "transaction")
                 .registerSubtype(MessageServerInQuestion.class, "serverInQuestion")
                 .registerSubtype(MessageResult.class, "result");
@@ -71,16 +71,13 @@ public class MessageHandlerRunnable implements Runnable{
                     case heartbeat:
                         this.heartbeatHandler(gson.fromJson(jsonElement, MessageHeartbeat.class));
                         break;
-                    case lastBlock:
-                        if (this.latestBlockHandler(gson.fromJson(jsonElement, MessageLastBlock.class))) {
+                    case latestBlock:
+                        if (this.latestBlockHandler(gson.fromJson(jsonElement, MessageLatestBlock.class))) {
                             break;
                         }
                     case transaction:
         				this.transactionHandler(gson.fromJson(jsonElement, MessageTransaction.class), outWriter);
         				break;
-                    /*case printBlock:
-        				this.printBlockHandler(outWriter);
-        				break;*/
                     case serverInQuestion:
                         this.serverInQuestionHandler(gson.fromJson(jsonElement, MessageServerInQuestion.class));
                         break;
@@ -98,10 +95,10 @@ public class MessageHandlerRunnable implements Runnable{
 	private void catchUpHandler(MessageCatchUp message) {
 		try (ObjectOutputStream outStream = new ObjectOutputStream(clientSocket.getOutputStream())){
 			if (!message.hasBlockHash()) {
-				outStream.writeObject(blockchain.getLastBlock());
+				outStream.writeObject(Blockchain.getLatestBlock());
 				outStream.flush();
 			} else {
-				Block currentBlock = blockchain.getLastBlock();
+				Block currentBlock = Blockchain.getLatestBlock();
 				while (true) {
 					if (currentBlock.getHeader().hash.equals(message.getBlockHash())) {
 					    outStream.writeObject(currentBlock);
@@ -112,7 +109,7 @@ public class MessageHandlerRunnable implements Runnable{
 						break;
 					}
 					//currentBlock = currentBlock.getPreviousBlock();
-					currentBlock = blockchain.getBlock(currentBlock.getHeader().previousHash);
+					currentBlock = Blockchain.getBlock(currentBlock.getHeader().previousHash);
 				}
 				outStream.writeObject(currentBlock);
 				outStream.flush();
@@ -124,22 +121,20 @@ public class MessageHandlerRunnable implements Runnable{
 	}
 
 	// TODO: rename related things: last -> latest
-    private boolean latestBlockHandler(MessageLastBlock message) {
+    private boolean latestBlockHandler(MessageLatestBlock message) {
     	try {
     		String blockHash;
-    		// TODO: check getLashBlock
-    		if (blockchain.getLastBlock() != null) {
-    			/*byte[] latestHash = blockchain.getLastBlock().calculateHash();
-    			blockHash = Base64.getEncoder().encodeToString(latestHash);*/
-    			blockHash =  blockchain.getLastBlock().getHeader().calculateHash();
+    		// TODO: check getLatestBlock
+    		if (Blockchain.getLatestBlock() != null) {
+    			blockHash = Blockchain.getLatestBlock().getHeader().calculateHash();
 
     		} else {
     			blockHash = "null";
     		}
     		
     		if (blockHash.equals(message.getLatestHash())
-                    && this.blockchain.getLength() > message.blockchainLength
-                    || this.blockchain.getLength() == message.blockchainLength
+                    && Blockchain.getLength() > message.blockchainLength
+                    || Blockchain.getLength() == message.blockchainLength
                     && message.latestHash.length() < blockHash.length()) {
     		//no catchup necessary
     			return true;
@@ -185,7 +180,7 @@ public class MessageHandlerRunnable implements Runnable{
                     prevHash = catchUpBlock.getHeader().previousHash;
     			}
 
-    			this.blockchain.catchUp(catchUpBlocks);
+    			Blockchain.catchUp(catchUpBlocks);
 
     			return false;
     		}
@@ -196,9 +191,13 @@ public class MessageHandlerRunnable implements Runnable{
     }
 
     public void transactionHandler(MessageTransaction message, PrintWriter outWriter) {
-        Transaction transaction = new Transaction(message.g)
+        Wallet wallet = new Wallet(
+                HashUtil.generatePrivateKey(message.senderPrivateKey),
+                HashUtil.generatePublicKey(message.senderPublicKey));
+        Transaction transaction = wallet.sendFunds(HashUtil.generatePublicKey(message.recipient), message.value);
+
         try {
-    		if (this.blockchain.getBlock().addTransaction(transaction))
+    		if (Blockchain.getLatestBlock().addTransaction(transaction))
                 outWriter.print(gson.toJson(new MessageResult(MessageResult.Type.accepted)));
     		else
                 outWriter.print(gson.toJson(new MessageResult(MessageResult.Type.denied)));
@@ -208,16 +207,6 @@ public class MessageHandlerRunnable implements Runnable{
     		e.printStackTrace();
 		}
 	}
-
-/*	public void printBlockHandler(PrintWriter outWriter) {
-    	try {
-    		outWriter.print(blockchain.toString() + "\n");
-    		System.out.println(blockchain.toString() + "\n");
-    		outWriter.flush();
-		} catch (Exception e) {
-    		e.printStackTrace();
-		}
-	}*/
 
     public void heartbeatHandler(MessageHeartbeat message) {
         ServerInfo serverInQuestion;

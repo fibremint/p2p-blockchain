@@ -1,21 +1,19 @@
 package com.fibremint.blockchain.message.model;
 
 public class MessageTransaction extends MessageBase {
-    private String sender;
-    private String content;
+    public String transactionHash;
+    public String senderPrivateKey;
+    public String senderPublicKey;
+    public String recipient;
+    public float value;
 
-    public MessageTransaction(String sender, String content) {
+    public MessageTransaction(
+            String transactionHash, String senderPrivateKey, String senderPublicKey, String recipient, float value) {
         super(MessageType.transaction);
-        this.sender = sender;
-        this.content = content;
-
-    }
-
-    public String getSender() {
-        return sender;
-    }
-
-    public String getContent() {
-        return content;
+        this.transactionHash = transactionHash;
+        this.senderPrivateKey = senderPrivateKey;
+        this.senderPublicKey = senderPublicKey;
+        this.recipient = recipient;
+        this.value = value;
     }
 }

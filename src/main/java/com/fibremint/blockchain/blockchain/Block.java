@@ -6,7 +6,7 @@ import java.util.ArrayList;
 
 public class Block {
     private BlockHeader header;
-    private ArrayList<Transaction> transactions;
+    public ArrayList<Transaction> transactions;
 
     public Block(BlockHeader header) {
         this.header = header;

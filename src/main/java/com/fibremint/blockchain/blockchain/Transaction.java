@@ -7,7 +7,7 @@ import java.security.PublicKey;
 import java.util.ArrayList;
 
 public class Transaction {
-    public String transactionHash;
+    public String hash;
     public PublicKey sender;
     public PublicKey recipient;
     public float value;
@@ -42,9 +42,9 @@ public class Transaction {
         }
 
         float leftOver = getInputsValue() - value;
-        transactionHash = calculateHash();
-        outputs.add(new TransactionOutput(this.recipient, value, transactionHash));
-        outputs.add(new TransactionOutput(this.sender, leftOver, transactionHash));
+        hash = calculateHash();
+        outputs.add(new TransactionOutput(this.recipient, value, hash));
+        outputs.add(new TransactionOutput(this.sender, leftOver, hash));
 
         for (TransactionOutput o : outputs)
             Blockchain.UTXOs.put(o.hash, o);
