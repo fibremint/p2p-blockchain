@@ -1,7 +1,7 @@
 package com.fibremint.blockchain.message.model;
 
 public class MessageCatchUp extends MessageBase{
-    String blockHash;
+    public String blockHash;
 
     public MessageCatchUp() {
         super(MessageType.catchUp);
@@ -17,7 +17,7 @@ public class MessageCatchUp extends MessageBase{
         return blockHash;
     }
 
-    public boolean hasBlockchain() {
+    public boolean hasBlockHash() {
         return !blockHash.equals("");
     }
 }

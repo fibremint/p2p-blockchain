@@ -71,7 +71,7 @@ public class MessageHandlerRunnable implements Runnable{
                         this.heartbeatHandler(gson.fromJson(jsonElement, MessageHeartbeat.class));
                         break;
                     case lastBlock:
-                        if (this.lastBlockHandler(gson.fromJson(jsonElement, MessageLastBlock.class))) {
+                        if (this.latestBlockHandler(gson.fromJson(jsonElement, MessageLastBlock.class))) {
                             break;
                         }
                     case transaction:
@@ -96,24 +96,22 @@ public class MessageHandlerRunnable implements Runnable{
 
 	private void catchUpHandler(MessageCatchUp message) {
 		try (ObjectOutputStream outStream = new ObjectOutputStream(clientSocket.getOutputStream())){
-			if (!message.hasBlockchain()) {
-				outStream.writeObject(blockchain.getHead());
+			if (!message.hasBlockHash()) {
+				outStream.writeObject(blockchain.getLastBlock());
 				outStream.flush();
 			} else {
-				Block currentBlock = blockchain.getHead();
+				Block currentBlock = blockchain.getLastBlock();
 				while (true) {
-					if (Base64.getEncoder().encodeToString(currentBlock.calculateHash())
-                            .equals(message.getBlockHash())) {
-						outStream.writeObject(currentBlock);
-						outStream.flush();
-						return;
-
-					}
+					if (currentBlock.getHeader().hash.equals(message.getBlockHash())) {
+					    outStream.writeObject(currentBlock);
+					    outStream.flush();
+					    return;
+                    }
 					if (currentBlock == null) {
 						break;
 					}
-					currentBlock = currentBlock.getPreviousBlock();
-					
+					//currentBlock = currentBlock.getPreviousBlock();
+					currentBlock = blockchain.getBlock(currentBlock.getHeader().previousHash);
 				}
 				outStream.writeObject(currentBlock);
 				outStream.flush();
@@ -124,21 +122,24 @@ public class MessageHandlerRunnable implements Runnable{
 		}
 	}
 
-    private boolean lastBlockHandler(MessageLastBlock message) {
+	// TODO: rename related things: last -> latest
+    private boolean latestBlockHandler(MessageLastBlock message) {
     	try {
-    		String encodedHash;
-    		if (blockchain.getHead() != null) {
-    			byte[] latestHash = blockchain.getHead().calculateHash();
-    			encodedHash = Base64.getEncoder().encodeToString(latestHash);
-    			
+    		String blockHash;
+    		// TODO: check getLashBlock
+    		if (blockchain.getLastBlock() != null) {
+    			/*byte[] latestHash = blockchain.getLastBlock().calculateHash();
+    			blockHash = Base64.getEncoder().encodeToString(latestHash);*/
+    			blockHash =  blockchain.getLastBlock().getHeader().calculateHash();
+
     		} else {
-    			encodedHash = "null";
+    			blockHash = "null";
     		}
     		
-    		if (encodedHash.equals(message.getLatestHash())
-                    && this.blockchain.getLength() > message.getBlockchainLength()
-                    || this.blockchain.getLength() == message.getBlockchainLength()
-                    && message.getLatestHash().length() < encodedHash.length()) {
+    		if (blockHash.equals(message.getLatestHash())
+                    && this.blockchain.getLength() > message.blockchainLength
+                    || this.blockchain.getLength() == message.blockchainLength
+                    && message.latestHash.length() < blockHash.length()) {
     		//no catchup necessary
     			return true;
     			
@@ -152,49 +153,39 @@ public class MessageHandlerRunnable implements Runnable{
     			outWriter = new PrintWriter(s.getOutputStream(), true);
     			
     			//naive catchup
-    			ArrayList<Block> blocks = new ArrayList<Block>();
-    			//outWriter.println("cu"); //getting head
+    			ArrayList<Block> catchUpBlocks = new ArrayList<Block>();
+    			//getting head
     			outWriter.println(gson.toJson(new MessageCatchUp()));
                 outWriter.flush();
 				ObjectInputStream inputStream;
 				inputStream = new ObjectInputStream(s.getInputStream());
-    			Block b = (Block) inputStream.readObject();
+				// TODO: check catchUpBlock contains header
+    			Block catchUpBlock = (Block) inputStream.readObject();
     			
     			inputStream.close();
     			s.close();
-    			blocks.add(b);
-    			String prevHash = Base64.getEncoder().encodeToString(b.getPreviousHash());
+    			catchUpBlocks.add(catchUpBlock);
+                String prevHash = catchUpBlock.getHeader().previousHash;
 
+                // TODO: refactor genesis block hash
     			while (!prevHash.startsWith("A")) {
     				s = new Socket(remoteIP, message.getLocalPort());
     				outWriter = new PrintWriter(s.getOutputStream(), true);
 
-    				//outWriter.println("cu|" + prevHash);
     				outWriter.println(gson.toJson(new MessageCatchUp(prevHash)));
                     outWriter.flush();
     				
     				inputStream = new ObjectInputStream(s.getInputStream());
 
-    				b = (Block) inputStream.readObject();
+    				catchUpBlock = (Block) inputStream.readObject();
     				inputStream.close();
     				s.close();
-    				blocks.add(b);
-    				prevHash = Base64.getEncoder().encodeToString(b.getPreviousHash());
+    				catchUpBlocks.add(catchUpBlock);
+                    prevHash = catchUpBlock.getHeader().previousHash;
     			}
-    			this.blockchain.setHead(blocks.get(0));
-    			this.blockchain.setLength(blocks.size());
-    			
-    			Block cur = this.blockchain.getHead();
-    			
-    			for (int i = 0; i < blocks.size(); i++) {
-    				if (i <= blocks.size() - 1) {
-    					cur.setPreviousBlock(blocks.get(i + 1));
-    				} else {
-    					cur.setPreviousBlock(null);
-    				}
-    				cur = cur.getPreviousBlock();
-    			}			
-    			
+
+    			this.blockchain.catchUp(catchUpBlocks);
+
     			return false;
     		}
     	

@@ -17,6 +17,11 @@ public class Wallet {
         generateKeyPair();
     }
 
+    public Wallet(PrivateKey privateKey, PublicKey publicKey) {
+        this.privateKey = privateKey;
+        this.publicKey = publicKey;
+    }
+
     public void generateKeyPair() {
         try {
             KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("ECDSA", "BC");

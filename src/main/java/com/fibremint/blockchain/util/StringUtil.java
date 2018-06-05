@@ -48,7 +48,7 @@ public class StringUtil {
             Signature ecdsaVerify = Signature.getInstance("ECDSA", "BC");
             ecdsaVerify.initVerify(publicKey);
             ecdsaVerify.update(data.getBytes());
-            return ecdsaVerify.verify(signature)
+            return ecdsaVerify.verify(signature);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -71,6 +71,10 @@ public class StringUtil {
         }
 
         return (treeLayer.size() == 1) ? treeLayer.get(0) : "";
+    }
+
+    public static String getStringFromByteArray(byte[] bytes) {
+        return Base64.getEncoder().encodeToString(bytes);
     }
 
     public static String getStringFromKey(Key key) {
