@@ -166,7 +166,8 @@ public class MessageHandlerRunnable implements Runnable{
                 String prevHash = catchUpBlock.getHeader().previousHash;
 
                 // TODO: refactor genesis block hash
-    			while (!prevHash.startsWith("A")) {
+    			/*while (!prevHash.startsWith("A")) {*/
+                while (!prevHash.equals("genesis")) {
     				s = new Socket(remoteIP, message.getLocalPort());
     				outWriter = new PrintWriter(s.getOutputStream(), true);
 

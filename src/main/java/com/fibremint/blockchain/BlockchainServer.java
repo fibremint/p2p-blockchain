@@ -42,13 +42,13 @@ public class BlockchainServer {
         Wallet coinbase = new Wallet();
         Transaction genesisTransaction = new Transaction(coinbase.publicKey, walletA.publicKey, 100f, null);
         genesisTransaction.generateSignature(coinbase.privateKey);
-        genesisTransaction.hash = "0";
+        genesisTransaction.hash = "genesis";
         genesisTransaction.outputs.add(new TransactionOutput(
                 genesisTransaction.recipient,
                 genesisTransaction.value,
                 genesisTransaction.hash));
 
-        Block genesis = new Block(new BlockHeader("0"));
+        Block genesis = new Block(new BlockHeader("genesis"));
         genesis.mineBlock(Blockchain.difficulty);
         Blockchain.blockchain.add(genesis);
 
