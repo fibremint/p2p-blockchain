@@ -25,7 +25,7 @@ public class Blockchain {
     public static synchronized void catchUp(ArrayList<Block> blocks) {
         ArrayList<Block> catchUpChain = new ArrayList<>();
 
-        for(int i = blocks.size() - 1; i > 0; i--)
+        for(int i = blocks.size() - 1; i >= 0; i--)
             catchUpChain.add(blocks.get(i));
 
         // TODO: check validation would be required.

@@ -125,7 +125,7 @@ public class MessageHandlerRunnable implements Runnable{
 	}
 
 	// TODO: rename related things: last -> latest
-    private boolean latestBlockHandler(MessageLatestBlock message) {
+    private void latestBlockHandler(MessageLatestBlock message) {
     	try {
     		String blockHash;
     		// TODO: check getLatestBlock
@@ -136,14 +136,20 @@ public class MessageHandlerRunnable implements Runnable{
     			blockHash = "";
     		}
     		
-    		if (blockHash.equals(message.getLatestHash())
+    		/*if (blockHash.equals(message.getLatestHash())
                     && Blockchain.getLength() > message.blockchainLength
                     || Blockchain.getLength() == message.blockchainLength
                     && message.latestHash.length() < blockHash.length()) {
     		//no catchup necessary
     			return true;
     			
-    		} else {
+    		} */
+            if (blockHash.equals(message.getLatestHash())
+                    && Blockchain.getLength() >= message.blockchainLength) {
+                //no catchup necessary
+                return;
+
+            } else {
     		//catchup case
     			//set up new connection
     			String remoteIP = (((InetSocketAddress) clientSocket.getRemoteSocketAddress()).getAddress()).toString().replace("/", "");
@@ -188,12 +194,10 @@ public class MessageHandlerRunnable implements Runnable{
 
     			Blockchain.catchUp(catchUpBlocks);
 
-    			return false;
     		}
     	
     	} catch (Exception e) {
     	}
-    	return false;
     }
 
     public void transactionHandler(MessageTransaction message, PrintWriter outWriter) {
