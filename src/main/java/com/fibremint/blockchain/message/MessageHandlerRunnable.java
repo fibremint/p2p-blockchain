@@ -71,10 +71,12 @@ public class MessageHandlerRunnable implements Runnable{
                     case heartbeat:
                         this.heartbeatHandler(gson.fromJson(jsonElement, MessageHeartbeat.class));
                         break;
-                    case latestBlock:
+                    case latestBlock:/*
                         if (this.latestBlockHandler(gson.fromJson(jsonElement, MessageLatestBlock.class))) {
                             break;
-                        }
+                        }*/
+                        this.latestBlockHandler(gson.fromJson(jsonElement, MessageLatestBlock.class));
+                        break;
                     case transaction:
         				this.transactionHandler(gson.fromJson(jsonElement, MessageTransaction.class), outWriter);
         				break;

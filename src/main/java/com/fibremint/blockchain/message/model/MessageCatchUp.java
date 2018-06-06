@@ -18,6 +18,6 @@ public class MessageCatchUp extends MessageBase{
     }
 
     public boolean hasBlockHash() {
-        return !blockHash.equals("");
+        return blockHash != null;
     }
 }
