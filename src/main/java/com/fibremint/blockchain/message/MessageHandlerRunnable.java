@@ -146,42 +146,44 @@ public class MessageHandlerRunnable implements Runnable{
     		//catchup case
     			//set up new connection
     			String remoteIP = (((InetSocketAddress) clientSocket.getRemoteSocketAddress()).getAddress()).toString().replace("/", "");
-    			Socket s;
-    			s = new Socket(remoteIP, message.getLocalPort());
+    			Socket socket;
+    			socket = new Socket(remoteIP, message.getLocalPort());
     			PrintWriter outWriter;
-    			outWriter = new PrintWriter(s.getOutputStream(), true);
+    			outWriter = new PrintWriter(socket.getOutputStream(), true);
     			
     			//naive catchup
     			ArrayList<Block> catchUpBlocks = new ArrayList<Block>();
     			//getting head
     			outWriter.println(gson.toJson(new MessageCatchUp()));
                 outWriter.flush();
-				ObjectInputStream inputStream;
-				inputStream = new ObjectInputStream(s.getInputStream());
-				// TODO: check catchUpBlock contains header
-    			Block catchUpBlock = (Block) inputStream.readObject();
+
+				ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+    			Block remoteLatestBlock = (Block) inputStream.readObject();
     			
     			inputStream.close();
-    			s.close();
-    			catchUpBlocks.add(catchUpBlock);
-                String prevHash = catchUpBlock.header.previousHash;
+    			socket.close();
+
+    			catchUpBlocks.add(remoteLatestBlock);
+                String prevHash = remoteLatestBlock.header.previousHash;
+                String localLatestBlockHash = Blockchain.getLatestBlock().header.hash;
 
                 // TODO: refactor genesis block hash
     			/*while (!prevHash.startsWith("A")) {*/
-                while (!prevHash.equals("genesis")) {
-    				s = new Socket(remoteIP, message.getLocalPort());
-    				outWriter = new PrintWriter(s.getOutputStream(), true);
+                /*while (!prevHash.equals("genesis")) {*/
+                while (!localLatestBlockHash.equals(prevHash)) {
+    				socket = new Socket(remoteIP, message.getLocalPort());
+    				outWriter = new PrintWriter(socket.getOutputStream(), true);
 
     				outWriter.println(gson.toJson(new MessageCatchUp(prevHash)));
                     outWriter.flush();
     				
-    				inputStream = new ObjectInputStream(s.getInputStream());
+    				inputStream = new ObjectInputStream(socket.getInputStream());
 
-    				catchUpBlock = (Block) inputStream.readObject();
+    				remoteLatestBlock = (Block) inputStream.readObject();
     				inputStream.close();
-    				s.close();
-    				catchUpBlocks.add(catchUpBlock);
-                    prevHash = catchUpBlock.header.previousHash;
+    				socket.close();
+    				catchUpBlocks.add(remoteLatestBlock);
+                    prevHash = remoteLatestBlock.header.previousHash;
     			}
 
     			Blockchain.catchUp(catchUpBlocks);
