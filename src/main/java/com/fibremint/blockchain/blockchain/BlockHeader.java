@@ -2,9 +2,10 @@ package com.fibremint.blockchain.blockchain;
 
 import com.fibremint.blockchain.util.HashUtil;
 
+import java.io.Serializable;
 import java.util.Date;
 
-public class BlockHeader {
+public class BlockHeader implements Serializable {
     private int version;
     public String hash;
     public String previousHash;

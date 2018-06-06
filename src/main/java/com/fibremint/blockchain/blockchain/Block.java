@@ -2,9 +2,10 @@ package com.fibremint.blockchain.blockchain;
 
 import com.fibremint.blockchain.util.HashUtil;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Block {
+public class Block implements Serializable {
     private BlockHeader header;
     public ArrayList<Transaction> transactions;
 
