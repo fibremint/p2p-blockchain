@@ -66,6 +66,7 @@ public class MessageHandlerRunnable implements Runnable{
         		messageType = jsonElement.getAsJsonObject().get("type").getAsString();
         		switch (MessageType.valueOf(messageType)) {
                     case catchUp:
+
                         catchUpHandler(gson.fromJson(jsonElement, MessageCatchUp.class));
                         break;
                     case heartbeat:
@@ -102,7 +103,7 @@ public class MessageHandlerRunnable implements Runnable{
 			} else {
 				Block currentBlock = Blockchain.getLatestBlock();
 				while (true) {
-					if (currentBlock.getHeader().hash.equals(message.getBlockHash())) {
+					if (currentBlock.header.hash.equals(message.getBlockHash())) {
 					    outStream.writeObject(currentBlock);
 					    outStream.flush();
 					    return;
@@ -111,7 +112,7 @@ public class MessageHandlerRunnable implements Runnable{
 						break;
 					}
 					//currentBlock = currentBlock.getPreviousBlock();
-					currentBlock = Blockchain.getBlock(currentBlock.getHeader().previousHash);
+					currentBlock = Blockchain.getBlock(currentBlock.header.previousHash);
 				}
 				outStream.writeObject(currentBlock);
 				outStream.flush();
@@ -128,10 +129,10 @@ public class MessageHandlerRunnable implements Runnable{
     		String blockHash;
     		// TODO: check getLatestBlock
     		if (Blockchain.getLatestBlock() != null) {
-    			blockHash = Blockchain.getLatestBlock().getHeader().calculateHash();
+    			blockHash = Blockchain.getLatestBlock().header.calculateHash();
 
     		} else {
-    			blockHash = "null";
+    			blockHash = "";
     		}
     		
     		if (blockHash.equals(message.getLatestHash())
@@ -163,7 +164,7 @@ public class MessageHandlerRunnable implements Runnable{
     			inputStream.close();
     			s.close();
     			catchUpBlocks.add(catchUpBlock);
-                String prevHash = catchUpBlock.getHeader().previousHash;
+                String prevHash = catchUpBlock.header.previousHash;
 
                 // TODO: refactor genesis block hash
     			/*while (!prevHash.startsWith("A")) {*/
@@ -180,7 +181,7 @@ public class MessageHandlerRunnable implements Runnable{
     				inputStream.close();
     				s.close();
     				catchUpBlocks.add(catchUpBlock);
-                    prevHash = catchUpBlock.getHeader().previousHash;
+                    prevHash = catchUpBlock.header.previousHash;
     			}
 
     			Blockchain.catchUp(catchUpBlocks);

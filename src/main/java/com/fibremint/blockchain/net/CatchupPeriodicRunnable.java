@@ -28,18 +28,18 @@ public class CatchupPeriodicRunnable implements Runnable {
 			//String LBmessage = "lb|" + String.valueOf(localPort) + "|" + String.valueOf(blockchain.getLength()) + "|";
             MessageLatestBlock message = new MessageLatestBlock(localPort, Blockchain.getLength());
             if (Blockchain.getLatestBlock() != null) {
-				String latestHash = Blockchain.getLatestBlock().getHeader().calculateHash();
+				String latestHash = Blockchain.getLatestBlock().header.calculateHash();
 				if (latestHash != null) {
                     //LBmessage += Base64.getEncoder().encodeToString(latestHash);
                     message.setLatestHash(latestHash);
 				} else {
                     //LBmessage += "null";
                     // Blockchain hasn't any of block
-                    message.setLatestHash("0");
+                    message.setLatestHash("");
                 }
 			} else {
 				//LBmessage += "null";
-                message.setLatestHash("0");
+                message.setLatestHash("");
 			}
 			 
 			

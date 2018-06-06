@@ -1,6 +1,5 @@
 package com.fibremint.blockchain.blockchain;
 
-import java.security.Security;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -11,7 +10,7 @@ public class Blockchain {
     public static float minimumTransaction = 0.1f;
 
     public static Block getBlock(String blockHash) {
-        return blockchain.stream().filter(block -> blockHash.equals(block.getHeader().hash))
+        return blockchain.stream().filter(block -> blockHash.equals(block.header.hash))
                 .findFirst().orElse(null);
     }
 

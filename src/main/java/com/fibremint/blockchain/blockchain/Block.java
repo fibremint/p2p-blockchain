@@ -6,7 +6,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 public class Block implements Serializable {
-    private BlockHeader header;
+    public BlockHeader header;
     public ArrayList<Transaction> transactions;
 
     public Block(BlockHeader header) {
@@ -14,10 +14,10 @@ public class Block implements Serializable {
         this.transactions = new ArrayList<>();
     }
 
-    public BlockHeader getHeader() {
+    /*public BlockHeader getHeader() {
         return header;
     }
-
+*/
     public ArrayList<Transaction> getTransactions() {
         return transactions;
     }
