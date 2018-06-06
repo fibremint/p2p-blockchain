@@ -165,12 +165,11 @@ public class MessageHandlerRunnable implements Runnable{
 
     			catchUpBlocks.add(remoteLatestBlock);
                 String prevHash = remoteLatestBlock.header.previousHash;
-                String localLatestBlockHash = Blockchain.getLatestBlock().header.hash;
 
                 // TODO: refactor genesis block hash
     			/*while (!prevHash.startsWith("A")) {*/
                 /*while (!prevHash.equals("genesis")) {*/
-                while (!localLatestBlockHash.equals(prevHash)) {
+                while (!blockHash.equals(prevHash) || prevHash.equals("genesis")) {
     				socket = new Socket(remoteIP, message.getLocalPort());
     				outWriter = new PrintWriter(socket.getOutputStream(), true);
 
