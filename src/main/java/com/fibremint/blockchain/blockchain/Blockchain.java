@@ -23,12 +23,16 @@ public class Blockchain {
     }
 
     public static synchronized void catchUp(ArrayList<Block> blocks) {
-        ArrayList<Block> blockchain = new ArrayList<>();
+        ArrayList<Block> catchUpChain = new ArrayList<>();
 
         for(int i = blocks.size() - 1; i > 0; i--)
-            blockchain.add(blocks.get(i));
+            catchUpChain.add(blocks.get(i));
 
         // TODO: check validation would be required.
-        Blockchain.blockchain = blockchain;
+        if (blockchain.isEmpty()) {
+            blockchain = catchUpChain;
+        } else {
+            blockchain.addAll(catchUpChain);
+        }
     }
 }
