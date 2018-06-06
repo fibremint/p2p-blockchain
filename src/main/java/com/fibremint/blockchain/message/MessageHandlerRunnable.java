@@ -103,14 +103,15 @@ public class MessageHandlerRunnable implements Runnable{
 			} else {
 				Block currentBlock = Blockchain.getLatestBlock();
 				while (true) {
+                    if (currentBlock == null) {
+                        break;
+                    }
 					if (currentBlock.header.hash.equals(message.getBlockHash())) {
 					    outStream.writeObject(currentBlock);
 					    outStream.flush();
 					    return;
                     }
-					if (currentBlock == null) {
-						break;
-					}
+
 					//currentBlock = currentBlock.getPreviousBlock();
 					currentBlock = Blockchain.getBlock(currentBlock.header.previousHash);
 				}
