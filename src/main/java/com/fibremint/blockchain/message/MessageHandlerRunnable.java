@@ -160,7 +160,12 @@ public class MessageHandlerRunnable implements Runnable{
     }
 
     private void propertiesHandler(PrintWriter outWriter) {
-            outWriter.print(gson.toJson(new MessageProperties(Blockchain.difficulty, Blockchain.minimumTransaction)));
+        String blockHash = "0";
+        Block block = Blockchain.getLatestBlock();
+
+        if (block != null) blockHash = block.header.hash;
+        outWriter.print(gson.toJson(new MessageProperties(blockHash,
+                Blockchain.difficulty, Blockchain.minimumTransaction, Blockchain.miningReward)));
     }
 
     private void transactionHandler(PrintWriter outWriter) {

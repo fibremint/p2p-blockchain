@@ -9,6 +9,7 @@ public class Blockchain {
     public static HashMap<String, TransactionOutput> UTXOs = new HashMap<>();
     public static int difficulty = 3;
     public static float minimumTransaction = 0.1f;
+    public static float miningReward = 100f;
 
     public static Block getBlock(String blockHash) {
         return blockchain.stream().filter(block -> blockHash.equals(block.header.hash))

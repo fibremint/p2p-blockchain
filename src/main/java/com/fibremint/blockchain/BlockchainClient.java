@@ -4,10 +4,14 @@ import com.fibremint.blockchain.blockchain.*;
 import com.fibremint.blockchain.net.ServerInfo;
 import org.bouncycastle.asn1.eac.ECDSAPublicKey;
 
+import java.security.Security;
+
 public class BlockchainClient {
 
     public static void main(String[] args) {
-        if (args.length != 3) {
+        Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+
+        if (args.length != 2) {
             return;
         }
 
@@ -37,7 +41,6 @@ public class BlockchainClient {
         }
     }
 
-        Wallet coinbase = new Wallet();
 
 /*
         Transaction genesisTransaction = new Transaction(coinbase.publicKey, 100f);
