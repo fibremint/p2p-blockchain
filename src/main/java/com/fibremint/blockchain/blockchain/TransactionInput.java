@@ -1,6 +1,8 @@
 package com.fibremint.blockchain.blockchain;
 
-public class TransactionInput {
+import java.io.Serializable;
+
+public class TransactionInput implements Serializable {
     public String transactionOutputHash;
     public TransactionOutput UTXO;
 

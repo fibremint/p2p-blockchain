@@ -4,12 +4,14 @@ package com.fibremint.blockchain.message.model;
 public class MessageLatestBlock extends MessageBase {
     public int localPort;
     public int blockchainLength;
+    public int transactionLength;
     public String latestHash;
 
-    public MessageLatestBlock(int localPort, int blockchainLength) {
+    public MessageLatestBlock(int localPort, int blockchainLength, int transactionLength) {
         super(MessageType.latestBlock);
         this.localPort = localPort;
         this.blockchainLength = blockchainLength;
+        this.transactionLength = transactionLength;
     }
 
     public int getLocalPort() {

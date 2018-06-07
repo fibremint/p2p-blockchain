@@ -38,32 +38,10 @@ public class BlockchainServer {
         }
         logger.info("Block chain server started");
 
-        Wallet walletA = new Wallet();
-        Wallet coinbase = new Wallet();
-        Transaction genesisTransaction = new Transaction(coinbase.publicKey, walletA.publicKey, 100f, null);
-        genesisTransaction.generateSignature(coinbase.privateKey);
-        genesisTransaction.hash = "genesis";
-        genesisTransaction.outputs.add(new TransactionOutput(
-                genesisTransaction.recipient,
-                genesisTransaction.value,
-                genesisTransaction.hash));
-
-        Block genesis = new Block(new BlockHeader("genesis"));
-        genesis.mineBlock(Blockchain.difficulty);
-        Blockchain.blockchain.add(genesis);
-
-
-
         HashMap<ServerInfo, Date> remoteServerStatus = new HashMap<>();
         remoteServerStatus.put(new ServerInfo(remoteHost, remotePort), new Date());
-
-        /*CommitPeriodicRunnable pcr = new CommitPeriodicRunnable(blockchain);
-        Thread pct = new Thread(pcr);
-        pct.start();*/
-        
         //periodically send heartbeats
         new Thread(new HeartBeatPeriodicRunnable(remoteServerStatus, localPort)).start();
-        
         //periodically catchup
         new Thread(new CatchupPeriodicRunnable(remoteServerStatus, localPort)).start();
         
@@ -84,6 +62,7 @@ public class BlockchainServer {
                 if (serverSocket != null)
                     serverSocket.close();
             } catch (IOException e) {
+                e.printStackTrace();
             } /*catch (InterruptedException e) {
             }*/
         }

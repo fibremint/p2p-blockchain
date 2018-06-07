@@ -1,4 +1,4 @@
 package com.fibremint.blockchain.message.model;
 
-public class MessageAddBlock {
+public class MessageBalance {
 }

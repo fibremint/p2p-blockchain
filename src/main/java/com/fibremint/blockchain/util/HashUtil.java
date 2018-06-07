@@ -59,7 +59,7 @@ public class HashUtil {
         }
     }
 
-    public static PrivateKey generatePrivateKey(String string) {
+/*    public static PrivateKey generatePrivateKey(String string) {
         byte[] keyBin = getByteArrayFromString(string);
         try {
             ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("prime192v1");
@@ -70,7 +70,7 @@ public class HashUtil {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
+    }*/
 
     public static PublicKey generatePublicKey(String string) {
         byte[] keyBin = getByteArrayFromString(string);

@@ -3,7 +3,6 @@ package com.fibremint.blockchain.message;
 import com.fibremint.blockchain.blockchain.*;
 import com.fibremint.blockchain.message.model.*;
 import com.fibremint.blockchain.net.ServerInfo;
-import com.fibremint.blockchain.util.HashUtil;
 import com.fibremint.blockchain.util.RuntimeTypeAdapterFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -34,6 +33,7 @@ public class MessageHandlerRunnable implements Runnable{
                 .registerSubtype(MessageCatchUp.class, "catchUp")
                 .registerSubtype(MessageHeartbeat.class, "heartbeat")
                 .registerSubtype(MessageLatestBlock.class, "latestBlock")
+                .registerSubtype(MessageProperties.class, "properties")
                 .registerSubtype(MessageTransaction.class, "transaction")
                 .registerSubtype(MessageServerInQuestion.class, "serverInQuestion")
                 .registerSubtype(MessageResult.class, "result");
@@ -59,27 +59,25 @@ public class MessageHandlerRunnable implements Runnable{
                 }
 
                 jsonElement = jsonParser.parse(inputLine);
-        		// TODO: move catchUp, heartBeat, latestBlock, serverInQuestion to network related message handler
         		messageType = jsonElement.getAsJsonObject().get("type").getAsString();
         		switch (MessageType.valueOf(messageType)) {
                     case catchUp:
-
                         catchUpHandler(gson.fromJson(jsonElement, MessageCatchUp.class));
                         break;
                     case heartbeat:
-                        this.heartbeatHandler(gson.fromJson(jsonElement, MessageHeartbeat.class));
+                        heartbeatHandler(gson.fromJson(jsonElement, MessageHeartbeat.class));
                         break;
-                    case latestBlock:/*
-                        if (this.latestBlockHandler(gson.fromJson(jsonElement, MessageLatestBlock.class))) {
-                            break;
-                        }*/
-                        this.latestBlockHandler(gson.fromJson(jsonElement, MessageLatestBlock.class));
+                    case latestBlock:
+                        latestBlockHandler(gson.fromJson(jsonElement, MessageLatestBlock.class));
+                        break;
+                    case properties:
+                        propertiesHandler(outWriter);
                         break;
                     case transaction:
-        				this.transactionHandler(gson.fromJson(jsonElement, MessageTransaction.class), outWriter);
+        				transactionHandler(outWriter);
         				break;
                     case serverInQuestion:
-                        this.serverInQuestionHandler(gson.fromJson(jsonElement, MessageServerInQuestion.class));
+                        serverInQuestionHandler(gson.fromJson(jsonElement, MessageServerInQuestion.class));
                         break;
         			default:
                        	outWriter.print(gson.toJson(new MessageResult(MessageResult.Type.error)));
@@ -110,27 +108,29 @@ public class MessageHandlerRunnable implements Runnable{
 		}
 	}
 
-	// TODO: rename related things: last -> latest
     private synchronized void latestBlockHandler(MessageLatestBlock message) {
         String localLatestBlockHash;
+        Block localLatestBlock = null;
         try {
-    		// TODO: check getLatestBlock
     		if (Blockchain.getLatestBlock() != null) {
-    			localLatestBlockHash = Blockchain.getLatestBlock().header.calculateHash();
-
-    		} else {
+    		    localLatestBlock = Blockchain.getLatestBlock();
+                localLatestBlockHash = localLatestBlock.header.calculateHash();
+            } else
     			localLatestBlockHash = "0";
-    		}
 
+    		int localTransactionLength = 0;
+    		if (localLatestBlock != null) localTransactionLength = localLatestBlock.transactions.size();
             if (localLatestBlockHash.equals(message.getLatestHash())
-                    || Blockchain.getLength() >= message.blockchainLength) {
+                    || Blockchain.getLength() >= message.blockchainLength
+                    && localTransactionLength >= message.transactionLength) {
                               //no catchup necessary
                 return;
 
             } else {
     		//catchup case
     			//set up new connection
-    			String remoteIP = (((InetSocketAddress) clientSocket.getRemoteSocketAddress()).getAddress()).toString().replace("/", "");
+    			String remoteIP = (((InetSocketAddress) clientSocket.getRemoteSocketAddress())
+                        .getAddress()).toString().replace("/", "");
     			Socket socket;
     			socket = new Socket(remoteIP, message.getLocalPort());
     			PrintWriter outWriter;
@@ -159,14 +159,16 @@ public class MessageHandlerRunnable implements Runnable{
     	}
     }
 
-    public void transactionHandler(MessageTransaction message, PrintWriter outWriter) {
-        Wallet wallet = new Wallet(
-                HashUtil.generatePrivateKey(message.senderPrivateKey),
-                HashUtil.generatePublicKey(message.senderPublicKey));
-        Transaction transaction = wallet.sendFunds(HashUtil.generatePublicKey(message.recipient), message.value);
+    private void propertiesHandler(PrintWriter outWriter) {
+            outWriter.print(gson.toJson(new MessageProperties(Blockchain.difficulty, Blockchain.minimumTransaction)));
+    }
 
+    private void transactionHandler(PrintWriter outWriter) {
         try {
-    		if (Blockchain.getLatestBlock().addTransaction(transaction))
+            ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
+            Transaction transaction = (Transaction) inputStream.readObject();
+
+            if (Blockchain.getLatestBlock().addTransaction(transaction))
                 outWriter.print(gson.toJson(new MessageResult(MessageResult.Type.accepted)));
     		else
                 outWriter.print(gson.toJson(new MessageResult(MessageResult.Type.denied)));
@@ -177,7 +179,7 @@ public class MessageHandlerRunnable implements Runnable{
 		}
 	}
 
-    public void heartbeatHandler(MessageHeartbeat message) {
+    private void heartbeatHandler(MessageHeartbeat message) {
         ServerInfo serverInQuestion;
 
         try {	
@@ -199,7 +201,7 @@ public class MessageHandlerRunnable implements Runnable{
     	}
     }
 
-    public void serverInQuestionHandler(MessageServerInQuestion message) {
+    private void serverInQuestionHandler(MessageServerInQuestion message) {
         try {
             ServerInfo serverInQuestion;
             serverInQuestion = new ServerInfo(message.getRemoteHost(), message.getRemotePort());
@@ -225,7 +227,7 @@ public class MessageHandlerRunnable implements Runnable{
 
 //Helper Functions//--------------------------
     
-    public void removeUnresponsive() {
+    private void removeUnresponsive() {
     	//check for servers that havent responded in 4 secs
         for (ServerInfo server: serverStatus.keySet()) {
             if (new Date().getTime() - serverStatus.get(server).getTime() > REMOTE_SERVER_TIMEOUT) {
@@ -235,7 +237,7 @@ public class MessageHandlerRunnable implements Runnable{
         }
     }
     
-    public void broadcastHeartbeat(String message, ArrayList<ServerInfo> exempt) {
+    private void broadcastHeartbeat(String message, ArrayList<ServerInfo> exempt) {
     	ArrayList<Thread> threadArrayList = new ArrayList<Thread>();
     	for (ServerInfo info: this.serverStatus.keySet()) {
             if (!exempt.contains(info)) {
