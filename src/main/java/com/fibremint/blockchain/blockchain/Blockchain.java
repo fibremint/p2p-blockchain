@@ -29,10 +29,10 @@ public class Blockchain {
             catchUpChain.add(blocks.get(i));
 
         // TODO: check validation would be required.
-        if (blockchain.isEmpty()) {
-            blockchain = catchUpChain;
-        } else {
+        if (!blockchain.isEmpty()) {
             blockchain.addAll(catchUpChain);
+        } else {
+            blockchain = catchUpChain;
         }
     }
 }
