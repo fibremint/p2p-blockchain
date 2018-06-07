@@ -163,7 +163,10 @@ public class MessageHandlerRunnable implements Runnable{
     			//naive catchup
     			//ArrayList<Block> catchUpBlocks = new ArrayList<Block>();
     			//getting head
-    			outWriter.println(gson.toJson(new MessageCatchUp(Blockchain.blockchain.indexOf(localLatestBlockHash))));
+                int catchUpBlockIndex = 0;
+                if (!localLatestBlockHash.equals("0"))
+                    catchUpBlockIndex = Blockchain.blockchain.indexOf(Blockchain.getBlock(localLatestBlockHash));
+    			outWriter.println(gson.toJson(new MessageCatchUp(catchUpBlockIndex)));
                 outWriter.flush();
 
 				ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
