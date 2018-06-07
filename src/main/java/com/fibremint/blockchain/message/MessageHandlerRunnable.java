@@ -1,9 +1,6 @@
 package com.fibremint.blockchain.message;
 
-import com.fibremint.blockchain.blockchain.Block;
-import com.fibremint.blockchain.blockchain.Blockchain;
-import com.fibremint.blockchain.blockchain.Transaction;
-import com.fibremint.blockchain.blockchain.Wallet;
+import com.fibremint.blockchain.blockchain.*;
 import com.fibremint.blockchain.message.model.*;
 import com.fibremint.blockchain.net.ServerInfo;
 import com.fibremint.blockchain.util.HashUtil;
@@ -98,38 +95,17 @@ public class MessageHandlerRunnable implements Runnable{
 	private synchronized void catchUpHandler(MessageCatchUp message) {
 		try (ObjectOutputStream outStream = new ObjectOutputStream(clientSocket.getOutputStream())){
             List<Block> catchUpBlocks = new ArrayList<>();
+
             for(int i = message.blockIndex; i < Blockchain.getLength(); i++)
                 catchUpBlocks.add(Blockchain.blockchain.get(i));
+
             outStream.writeObject(catchUpBlocks);
             outStream.flush();
-		    /*if (!message.hasBlockHash()) {
-				outStream.writeObject(Blockchain.getLatestBlock());
-				outStream.flush();
-			} else {
-			    List<Block> catchUpBlocks = new ArrayList<>();
-			    int remoteBlockIndex = Blockchain.blockchain.indexOf(Blockchain.getBlock(message.blockHash));
-			    for(int i=remoteBlockIndex; i<Blockchain.getLength(); i++)
-			        catchUpBlocks.add(Blockchain.blockchain.get(i));
-                outStream.writeObject(catchUpBlocks);
-                outStream.flush();*/
-				/*Block currentBlock = Blockchain.getLatestBlock();
-				while (true) {
-                    if (currentBlock == null) {
-                        break;
-                    }
-					if (currentBlock.header.hash.equals(message.getBlockHash())) {
-					    outStream.writeObject(currentBlock);
-					    outStream.flush();
-					    return;
-                    }
 
-					//currentBlock = currentBlock.getPreviousBlock();
-					currentBlock = Blockchain.getBlock(currentBlock.header.previousHash);
-				}
-				outStream.writeObject(currentBlock);
-				outStream.flush();
-				*/
-			} catch (Exception e) {
+            outStream.writeObject(Blockchain.UTXOs);
+            outStream.flush();
+
+		} catch (Exception e) {
 		    e.printStackTrace();
 		}
 	}
@@ -161,45 +137,21 @@ public class MessageHandlerRunnable implements Runnable{
     			outWriter = new PrintWriter(socket.getOutputStream(), true);
     			
     			//naive catchup
-    			//ArrayList<Block> catchUpBlocks = new ArrayList<Block>();
-    			//getting head
-                int catchUpBlockIndex = 0;
+    			int catchUpBlockIndex = 0;
                 if (!localLatestBlockHash.equals("0"))
                     catchUpBlockIndex = Blockchain.blockchain.indexOf(Blockchain.getBlock(localLatestBlockHash));
     			outWriter.println(gson.toJson(new MessageCatchUp(catchUpBlockIndex)));
                 outWriter.flush();
 
-				ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
-    			//Block remoteLatestBlock = (Block) inputStream.readObject();
-    			//catchUpBlocks = (ArrayList<Block>) inputStream.readObject();
-    			List<Block> catchUpBlocks = (List<Block>) inputStream.readObject();
+                ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+
+                List<Block> catchUpBlocks = (List<Block>) inputStream.readObject();
+                HashMap<String, TransactionOutput> catchUpUXTOs = (HashMap) inputStream.readObject();
 
                 inputStream.close();
     			socket.close();
 
-    			//catchUpBlocks.add(remoteLatestBlock);
-                /*String prevHash = remoteLatestBlock.header.previousHash;
-
-                // TODO: refactor genesis block hash
-    			*//*while (!prevHash.startsWith("A")) {*//*
-                *//*while (!prevHash.equals("genesis")) {*//*
-                while (!localLatestBlockHash.equals(prevHash) && !prevHash.equals("0")) {
-    				socket = new Socket(remoteIP, message.getLocalPort());
-    				outWriter = new PrintWriter(socket.getOutputStream(), true);
-
-    				outWriter.println(gson.toJson(new MessageCatchUp(prevHash)));
-                    outWriter.flush();
-    				
-    				inputStream = new ObjectInputStream(socket.getInputStream());
-
-    				remoteLatestBlock = (Block) inputStream.readObject();
-    				inputStream.close();
-    				socket.close();
-    				catchUpBlocks.add(remoteLatestBlock);
-                    prevHash = remoteLatestBlock.header.previousHash;
-    			}*/
-
-    			Blockchain.catchUp(catchUpBlocks);
+    			Blockchain.catchUp(catchUpBlocks, catchUpUXTOs);
 
     		}
     	

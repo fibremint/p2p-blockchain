@@ -23,19 +23,10 @@ public class Blockchain {
         return blockchain.size();
     }
 
-    public static synchronized void catchUp(List<Block> blocks) {
-        blockchain.addAll(blocks);
-        /*ArrayList<Block> catchUpChain = new ArrayList<>();
-
-        for(int i = blocks.size() - 1; i >= 0; i--)
-            catchUpChain.add(blocks.get(i));
-
-        // TODO: check validation would be required.
-        if (!blockchain.isEmpty()) {
-            blockchain.addAll(catchUpChain);
-        } else {
-            blockchain = catchUpChain;
-        }*/
+    public static synchronized void catchUp(List<Block> catchUpBlocks, HashMap<String, TransactionOutput> catchUpUXTOs) {
+        blockchain.addAll(catchUpBlocks);
+        UTXOs = catchUpUXTOs;
+        // TODO: validation would be required.
     }
 
     public static Boolean isChainValid() {
