@@ -97,16 +97,22 @@ public class MessageHandlerRunnable implements Runnable{
 
 	private synchronized void catchUpHandler(MessageCatchUp message) {
 		try (ObjectOutputStream outStream = new ObjectOutputStream(clientSocket.getOutputStream())){
-			if (!message.hasBlockHash()) {
+            List<Block> catchUpBlocks = new ArrayList<>();
+            int remoteBlockIndex = Blockchain.blockchain.indexOf(Blockchain.getBlock(message.blockHash));
+            for(int i=remoteBlockIndex; i<Blockchain.getLength(); i++)
+                catchUpBlocks.add(Blockchain.blockchain.get(i));
+            outStream.writeObject(catchUpBlocks);
+            outStream.flush();
+		    /*if (!message.hasBlockHash()) {
 				outStream.writeObject(Blockchain.getLatestBlock());
 				outStream.flush();
 			} else {
-			    ArrayList<Block> catchUpBlocks = new ArrayList<>();
+			    List<Block> catchUpBlocks = new ArrayList<>();
 			    int remoteBlockIndex = Blockchain.blockchain.indexOf(Blockchain.getBlock(message.blockHash));
 			    for(int i=remoteBlockIndex; i<Blockchain.getLength(); i++)
 			        catchUpBlocks.add(Blockchain.blockchain.get(i));
                 outStream.writeObject(catchUpBlocks);
-                outStream.flush();
+                outStream.flush();*/
 				/*Block currentBlock = Blockchain.getLatestBlock();
 				while (true) {
                     if (currentBlock == null) {
@@ -124,25 +130,24 @@ public class MessageHandlerRunnable implements Runnable{
 				outStream.writeObject(currentBlock);
 				outStream.flush();
 				*/
-			}
-		} catch (Exception e) {
+			} catch (Exception e) {
 		    e.printStackTrace();
 		}
 	}
 
 	// TODO: rename related things: last -> latest
     private synchronized void latestBlockHandler(MessageLatestBlock message) {
-    	try {
-    		String blockHash;
+        String localLatestBlockHash;
+        try {
     		// TODO: check getLatestBlock
     		if (Blockchain.getLatestBlock() != null) {
-    			blockHash = Blockchain.getLatestBlock().header.calculateHash();
+    			localLatestBlockHash = Blockchain.getLatestBlock().header.calculateHash();
 
     		} else {
-    			blockHash = "0";
+    			localLatestBlockHash = "0";
     		}
 
-            if (blockHash.equals(message.getLatestHash())
+            if (localLatestBlockHash.equals(message.getLatestHash())
                     || Blockchain.getLength() >= message.blockchainLength) {
                               //no catchup necessary
                 return;
@@ -157,15 +162,17 @@ public class MessageHandlerRunnable implements Runnable{
     			outWriter = new PrintWriter(socket.getOutputStream(), true);
     			
     			//naive catchup
-    			ArrayList<Block> catchUpBlocks = new ArrayList<Block>();
+    			//ArrayList<Block> catchUpBlocks = new ArrayList<Block>();
     			//getting head
-    			outWriter.println(gson.toJson(new MessageCatchUp()));
+    			outWriter.println(gson.toJson(new MessageCatchUp(localLatestBlockHash)));
                 outWriter.flush();
 
 				ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
     			//Block remoteLatestBlock = (Block) inputStream.readObject();
-    			catchUpBlocks = (ArrayList<Block>) inputStream.readObject();
-    			inputStream.close();
+    			//catchUpBlocks = (ArrayList<Block>) inputStream.readObject();
+    			List<Block> catchUpBlocks = (List<Block>) inputStream.readObject();
+    			
+                inputStream.close();
     			socket.close();
 
     			//catchUpBlocks.add(remoteLatestBlock);
@@ -174,7 +181,7 @@ public class MessageHandlerRunnable implements Runnable{
                 // TODO: refactor genesis block hash
     			*//*while (!prevHash.startsWith("A")) {*//*
                 *//*while (!prevHash.equals("genesis")) {*//*
-                while (!blockHash.equals(prevHash) && !prevHash.equals("0")) {
+                while (!localLatestBlockHash.equals(prevHash) && !prevHash.equals("0")) {
     				socket = new Socket(remoteIP, message.getLocalPort());
     				outWriter = new PrintWriter(socket.getOutputStream(), true);
 

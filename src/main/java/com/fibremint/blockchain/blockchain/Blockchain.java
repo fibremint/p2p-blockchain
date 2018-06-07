@@ -2,6 +2,7 @@ package com.fibremint.blockchain.blockchain;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class Blockchain {
     public static ArrayList<Block> blockchain = new ArrayList<>();
@@ -22,7 +23,7 @@ public class Blockchain {
         return blockchain.size();
     }
 
-    public static synchronized void catchUp(ArrayList<Block> blocks) {
+    public static synchronized void catchUp(List<Block> blocks) {
         blockchain.addAll(blocks);
         /*ArrayList<Block> catchUpChain = new ArrayList<>();
 
