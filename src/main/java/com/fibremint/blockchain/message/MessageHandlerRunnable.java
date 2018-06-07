@@ -145,13 +145,14 @@ public class MessageHandlerRunnable implements Runnable{
     			
     		} */
             if (blockHash.equals(message.getLatestHash())
-                    && Blockchain.getLength() >= message.blockchainLength) {
+                    || Blockchain.getLength() >= message.blockchainLength) {
                               //no catchup necessary
                 return;
 
             } else {
     		//catchup case
     			//set up new connection
+                System.out.println(message.getBlockchainLength() + " " + Blockchain.getLength());
     			String remoteIP = (((InetSocketAddress) clientSocket.getRemoteSocketAddress()).getAddress()).toString().replace("/", "");
     			Socket socket;
     			socket = new Socket(remoteIP, message.getLocalPort());
