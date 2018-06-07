@@ -35,11 +35,11 @@ public class CatchupPeriodicRunnable implements Runnable {
 				} else {
                     //LBmessage += "null";
                     // Blockchain hasn't any of block
-                    message.setLatestHash("");
+                    message.setLatestHash("0");
                 }
 			} else {
 				//LBmessage += "null";
-                message.setLatestHash("");
+                message.setLatestHash("0");
 			}
 			 
 			
