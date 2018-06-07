@@ -136,20 +136,20 @@ public class MessageHandlerRunnable implements Runnable{
     			blockHash = "0";
     		}
     		
-    		/*if (blockHash.equals(message.getLatestHash())
+    		if (blockHash.equals(message.getLatestHash())
                     && Blockchain.getLength() > message.blockchainLength
                     || Blockchain.getLength() == message.blockchainLength
                     && message.latestHash.length() < blockHash.length()) {
     		//no catchup necessary
-    			return true;
+    			return;
     			
-    		} */
-            if (blockHash.equals(message.getLatestHash())
+    		}
+            /*if (blockHash.equals(message.getLatestHash())
                     && Blockchain.getLength() >= message.blockchainLength) {
-                //no catchup necessary
+                              //no catchup necessary
                 return;
 
-            } else {
+            }*/ else {
     		//catchup case
     			//set up new connection
     			String remoteIP = (((InetSocketAddress) clientSocket.getRemoteSocketAddress()).getAddress()).toString().replace("/", "");
