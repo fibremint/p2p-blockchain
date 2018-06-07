@@ -95,7 +95,7 @@ public class MessageHandlerRunnable implements Runnable{
         }
     }
 
-	private void catchUpHandler(MessageCatchUp message) {
+	private synchronized void catchUpHandler(MessageCatchUp message) {
 		try (ObjectOutputStream outStream = new ObjectOutputStream(clientSocket.getOutputStream())){
 			if (!message.hasBlockHash()) {
 				outStream.writeObject(Blockchain.getLatestBlock());
@@ -125,7 +125,7 @@ public class MessageHandlerRunnable implements Runnable{
 	}
 
 	// TODO: rename related things: last -> latest
-    private void latestBlockHandler(MessageLatestBlock message) {
+    private synchronized void latestBlockHandler(MessageLatestBlock message) {
     	try {
     		String blockHash;
     		// TODO: check getLatestBlock
