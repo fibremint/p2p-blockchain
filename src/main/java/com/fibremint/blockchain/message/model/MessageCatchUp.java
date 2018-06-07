@@ -1,23 +1,11 @@
 package com.fibremint.blockchain.message.model;
 
 public class MessageCatchUp extends MessageBase{
-    public String blockHash;
+    public int blockIndex;
 
-    public MessageCatchUp() {
+    public MessageCatchUp(int blockIndex) {
         super(MessageType.catchUp);
-    }
+        this.blockIndex = blockIndex;
 
-    public MessageCatchUp(String blockHash) {
-        super(MessageType.catchUp);
-        this.blockHash = blockHash;
-
-    }
-
-    public String getBlockHash() {
-        return blockHash;
-    }
-
-    public boolean hasBlockHash() {
-        return blockHash != null;
     }
 }

@@ -98,8 +98,7 @@ public class MessageHandlerRunnable implements Runnable{
 	private synchronized void catchUpHandler(MessageCatchUp message) {
 		try (ObjectOutputStream outStream = new ObjectOutputStream(clientSocket.getOutputStream())){
             List<Block> catchUpBlocks = new ArrayList<>();
-            int remoteBlockIndex = Blockchain.blockchain.indexOf(Blockchain.getBlock(message.blockHash));
-            for(int i=remoteBlockIndex; i<Blockchain.getLength(); i++)
+            for(int i = message.blockIndex; i < Blockchain.getLength(); i++)
                 catchUpBlocks.add(Blockchain.blockchain.get(i));
             outStream.writeObject(catchUpBlocks);
             outStream.flush();
@@ -164,14 +163,14 @@ public class MessageHandlerRunnable implements Runnable{
     			//naive catchup
     			//ArrayList<Block> catchUpBlocks = new ArrayList<Block>();
     			//getting head
-    			outWriter.println(gson.toJson(new MessageCatchUp(localLatestBlockHash)));
+    			outWriter.println(gson.toJson(new MessageCatchUp(Blockchain.blockchain.indexOf(localLatestBlockHash))));
                 outWriter.flush();
 
 				ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
     			//Block remoteLatestBlock = (Block) inputStream.readObject();
     			//catchUpBlocks = (ArrayList<Block>) inputStream.readObject();
     			List<Block> catchUpBlocks = (List<Block>) inputStream.readObject();
-    			
+
                 inputStream.close();
     			socket.close();
 
