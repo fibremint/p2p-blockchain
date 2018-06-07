@@ -133,7 +133,7 @@ public class MessageHandlerRunnable implements Runnable{
     			blockHash = Blockchain.getLatestBlock().header.calculateHash();
 
     		} else {
-    			blockHash = "";
+    			blockHash = "0";
     		}
     		
     		/*if (blockHash.equals(message.getLatestHash())
