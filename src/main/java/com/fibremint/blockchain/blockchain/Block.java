@@ -15,7 +15,7 @@ public class Block implements Serializable {
     }
 
 
-    /*public void mineBlock(int difficulty) {
+    public void mineBlock(int difficulty) {
         header.merkleRootHash = HashUtil.getMerkleRoot(transactions);
         String target = HashUtil.getDifficultyString(difficulty);
         while(!header.hash.substring(0, difficulty).equals(target)) {
@@ -24,11 +24,11 @@ public class Block implements Serializable {
         }
 
         System.out.println("Block mined");
-    }*/
+    }
 
     public boolean addTransaction(Transaction transaction) {
         if (transaction == null) return false;
-        if (!"0".equals(header.previousHash)) {
+        if (!"0".equals(transaction.hash)) {
             if (!transaction.processTransaction()) {
                 System.out.println("Transaction failed to process. Discarded.");
                 return false;

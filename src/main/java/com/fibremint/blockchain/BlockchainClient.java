@@ -43,7 +43,17 @@ public class BlockchainClient {
             outWriter.println(gson.toJson(new MessageProperties()));
             outWriter.flush();
 
-            while(messageProperties == null);
+            String retrieve = null;
+            try {
+                while(retrieve == null) {
+                    retrieve = inputReader.readLine();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            messageProperties = gson.fromJson(new JsonParser().parse(retrieve), MessageProperties.class);
+            //while(messageProperties != null) break;
 
             Transaction genesisTransaction = new Transaction(coinProvider.publicKey, wallet.publicKey,
                     messageProperties.miningReward, null);
@@ -126,7 +136,7 @@ public class BlockchainClient {
         }
 
         Thread incoming =  new Thread(new IncomingReader());
-        incoming.start();
+        //incoming.start();
 
         Wallet wallet = new Wallet();
 

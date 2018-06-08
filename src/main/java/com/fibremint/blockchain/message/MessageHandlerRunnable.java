@@ -93,13 +93,15 @@ public class MessageHandlerRunnable implements Runnable{
 
     private void mineBlockHandler(PrintWriter outWriter) {
         try(ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream())) {
-            Block block = (Block) inputStream.readObject();
-            ArrayList<Block> testChain = Blockchain.blockchain;
-            testChain.add(block);
+            Block mineBlock = (Block) inputStream.readObject();
+            ArrayList<Block> testChain = new ArrayList<>(Blockchain.blockchain);
+            testChain.add(mineBlock);
             if (Blockchain.isChainValid(testChain)) {
-                Blockchain.UTXOs.put(block.transactions.get(0).outputs.get(0).hash, block.transactions.get(0).outputs.get(0));
-                Blockchain.blockchain.add(block);
+                Blockchain.blockchain.add(mineBlock);
+                Blockchain.UTXOs.put(mineBlock.transactions.get(0).outputs.get(0).hash, mineBlock.transactions.get(0).outputs.get(0));
             }
+            Transaction transaction = new Wallet().sendFunds(new Wallet().publicKey, 30f);
+            //Blockchain.getLatestBlock().addTransaction(transaction);
 
             inputStream.close();
             outWriter.close();
@@ -140,7 +142,7 @@ public class MessageHandlerRunnable implements Runnable{
     		if (localLatestBlock != null) localTransactionLength = localLatestBlock.transactions.size();
             if (localLatestBlockHash.equals(message.getLatestHash())
                     || Blockchain.getLength() >= message.blockchainLength
-                    && localTransactionLength >= message.transactionLength) {
+                    || localTransactionLength >= message.transactionLength) {
                               //no catchup necessary
                 return;
 

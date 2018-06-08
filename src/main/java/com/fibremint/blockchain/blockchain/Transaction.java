@@ -27,7 +27,7 @@ public class Transaction implements Serializable {
         this.inputs = inputs;
     }
 
-    /*public Transaction(PrivateKey minerPrivateKey, PublicKey minerPublicKey, float value) {
+    public Transaction(PrivateKey minerPrivateKey, PublicKey minerPublicKey, float value) {
         this.outputs = new ArrayList<>();
 
         this.recipient = minerPublicKey;
@@ -38,7 +38,7 @@ public class Transaction implements Serializable {
         this.hash = "0";
 //
 //        outputs.add(new TransactionOutput(recipient, value, hash));
-    }*/
+    }
 
 
     public boolean processTransaction() {
