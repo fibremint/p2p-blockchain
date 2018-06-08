@@ -6,7 +6,7 @@ public enum MessageType {
     @SerializedName("catchUp") catchUp,
     @SerializedName("heartbeat") heartbeat,
     @SerializedName("latestBlock") latestBlock,
-    @SerializedName("mine") mineBlock,
+    @SerializedName("mineBlock") mineBlock,
     @SerializedName("properties") properties,
     @SerializedName("result") result,
     @SerializedName("sendFund") sendFund,

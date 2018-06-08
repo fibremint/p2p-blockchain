@@ -30,17 +30,17 @@ public class Blockchain {
         // TODO: validation would be required.
     }
 
-    public static Boolean isChainValid() {
+    public static Boolean isChainValid(ArrayList<Block> blockchain) {
         Block currentBlock;
         Block previousBlock;
         String hashTarget = new String(new char[Blockchain.difficulty]).replace('\0', '0');
-        HashMap<String,TransactionOutput> tempUTXOs = new HashMap<String,TransactionOutput>(); //a temporary working list of unspent transactions at a given block state.
+        HashMap<String,TransactionOutput> tempUTXOs = new HashMap<>(); //a temporary working list of unspent transactions at a given block state.
 
         //loop through blockchain to check hashes:
-        for(int i=1; i < Blockchain.blockchain.size(); i++) {
+        for(int i=1; i < blockchain.size(); i++) {
 
-            currentBlock = Blockchain.blockchain.get(i);
-            previousBlock = Blockchain.blockchain.get(i-1);
+            currentBlock = blockchain.get(i);
+            previousBlock = blockchain.get(i-1);
             //compare registered hash and calculated hash:
             if(!currentBlock.header.hash.equals(currentBlock.header.calculateHash()) ){
                 System.out.println("#Current Hashes not equal");

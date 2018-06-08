@@ -30,6 +30,7 @@ public class MessageHandlerRunnable implements Runnable{
 
         RuntimeTypeAdapterFactory<MessageBase> messageAdapterFactory = RuntimeTypeAdapterFactory
                 .of(MessageBase.class, "Type")
+                .registerSubtype(MessageMineBlock.class, "mineBlock")
                 .registerSubtype(MessageCatchUp.class, "catchUp")
                 .registerSubtype(MessageHeartbeat.class, "heartbeat")
                 .registerSubtype(MessageLatestBlock.class, "latestBlock")
@@ -53,14 +54,14 @@ public class MessageHandlerRunnable implements Runnable{
 
         	while (true) {
         		String inputLine = inputReader.readLine();
-
-        		if (inputLine == null) {
-                    break;
-                }
+        		if (inputLine == null) break;
 
                 jsonElement = jsonParser.parse(inputLine);
         		messageType = jsonElement.getAsJsonObject().get("type").getAsString();
         		switch (MessageType.valueOf(messageType)) {
+                    case mineBlock:
+                        mineBlockHandler(outWriter);
+                        break;
                     case catchUp:
                         catchUpHandler(gson.fromJson(jsonElement, MessageCatchUp.class));
                         break;
@@ -87,6 +88,20 @@ public class MessageHandlerRunnable implements Runnable{
             clientSocket.close();
         } catch (IOException e) {
             //e.printStackTrace();
+        }
+    }
+
+    private void mineBlockHandler(PrintWriter outWriter) {
+        try(ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream())) {
+            Block block = (Block) inputStream.readObject();
+            ArrayList<Block> testChain = Blockchain.blockchain;
+            testChain.add(block);
+            if (Blockchain.isChainValid(testChain)) {
+                Blockchain.UTXOs.put(block.transactions.get(0).outputs.get(0).hash, block.transactions.get(0).outputs.get(0));
+                Blockchain.blockchain.add(block);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -160,12 +175,19 @@ public class MessageHandlerRunnable implements Runnable{
     }
 
     private void propertiesHandler(PrintWriter outWriter) {
-        String blockHash = "0";
-        Block block = Blockchain.getLatestBlock();
+       try {
+           String blockHash = "0";
+           Block block = Blockchain.getLatestBlock();
 
-        if (block != null) blockHash = block.header.hash;
-        outWriter.print(gson.toJson(new MessageProperties(blockHash,
-                Blockchain.difficulty, Blockchain.minimumTransaction, Blockchain.miningReward)));
+           if (block != null) blockHash = block.header.hash;
+
+           outWriter.println(gson.toJson(new MessageProperties(blockHash,
+                   Blockchain.difficulty, Blockchain.minimumTransaction, Blockchain.miningReward)));
+           outWriter.flush();
+           //outWriter.close();
+       } catch (Exception e) {
+           e.printStackTrace();
+       }
     }
 
     private void transactionHandler(PrintWriter outWriter) {

@@ -1,3 +1,4 @@
+/*
 package com.fibremint.blockchain.blockchain;
 
 import com.fibremint.blockchain.message.MessageSenderRunnable;
@@ -32,10 +33,12 @@ public class BlockMiner implements Runnable {
             socket = new Socket(serverInfo.getHost(), serverInfo.getPort());
             BufferedReader inputReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            new Thread(new MessageSenderRunnable(serverInfo, gson.toJson(new MessageProperties())));
+            new Thread(new MessageSenderRunnable(serverInfo, gson.toJson(new MessageProperties()))).run();
+
+            String inputLine = inputReader.readLine();
 
             MessageProperties message = gson.fromJson(
-                    jsonParser.parse(inputReader.readLine()), MessageProperties.class);
+                    jsonParser.parse(inputLine), MessageProperties.class);
 
             Block block = new Block(new BlockHeader(message.blockHash));
 
@@ -60,3 +63,4 @@ public class BlockMiner implements Runnable {
     }
 }
 
+*/
