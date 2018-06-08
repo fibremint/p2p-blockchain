@@ -27,19 +27,18 @@ public class CatchupPeriodicRunnable implements Runnable {
 	    Gson gson = new Gson();
 	    Block latestBlock;
 		while(true) {
-		    latestBlock = Blockchain.getLatestBlock();
-		    int transactionSize = 0;
-		    if (latestBlock != null) transactionSize = latestBlock.transactions.size();
 			//String LBmessage = "lb|" + String.valueOf(localPort) + "|" + String.valueOf(blockchain.getLength()) + "|";
-            MessageLatestBlock message = new MessageLatestBlock(localPort, Blockchain.getLength(), transactionSize);
+            MessageLatestBlock message = new MessageLatestBlock(localPort, Blockchain.getLength());
+            latestBlock = Blockchain.getLatestBlock();
             if (latestBlock != null) {
 				String latestHash = Blockchain.getLatestBlock().header.calculateHash();
 				if (latestHash != null) {
                     //LBmessage += Base64.getEncoder().encodeToString(latestHash);
                     message.setLatestHash(latestHash);
+                    message.setTransactionLength(latestBlock.transactions.size());
 				} else {
                     //LBmessage += "null";
-                    // Blockchain hasn't any of block
+                    // Blockchain hasn't any of latestBlock
                     message.setLatestHash("0");
                 }
 			} else {

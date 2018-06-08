@@ -7,11 +7,10 @@ public class MessageLatestBlock extends MessageBase {
     public int transactionLength;
     public String latestHash;
 
-    public MessageLatestBlock(int localPort, int blockchainLength, int transactionLength) {
+    public MessageLatestBlock(int localPort, int blockchainLength) {
         super(MessageType.latestBlock);
         this.localPort = localPort;
         this.blockchainLength = blockchainLength;
-        this.transactionLength = transactionLength;
     }
 
     public int getLocalPort() {
@@ -28,5 +27,9 @@ public class MessageLatestBlock extends MessageBase {
 
     public void setLatestHash(String latestHash) {
         this.latestHash = latestHash;
+    }
+
+    public void setTransactionLength(int transactionLength) {
+        this.transactionLength = transactionLength;
     }
 }
