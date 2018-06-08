@@ -7,12 +7,6 @@ public class MessageLatestBlock extends MessageBase {
     public int transactionLength;
     public String latestHash;
 
-    public MessageLatestBlock(int localPort, int blockchainLength) {
-        super(MessageType.latestBlock);
-        this.localPort = localPort;
-        this.blockchainLength = blockchainLength;
-    }
-
     public MessageLatestBlock(int localPort, int blockchainLength, int transactionLength) {
         super(MessageType.latestBlock);
         this.localPort = localPort;

@@ -1,5 +1,6 @@
 package com.fibremint.blockchain.net;
 
+import com.fibremint.blockchain.blockchain.Block;
 import com.fibremint.blockchain.blockchain.Blockchain;
 import com.fibremint.blockchain.message.MessageSenderRunnable;
 import com.fibremint.blockchain.message.model.MessageLatestBlock;
@@ -24,10 +25,14 @@ public class CatchupPeriodicRunnable implements Runnable {
 	@Override
 	public void run() {
 	    Gson gson = new Gson();
+	    Block latestBlock;
 		while(true) {
+		    latestBlock = Blockchain.getLatestBlock();
+		    int transactionSize = 0;
+		    if (latestBlock != null) transactionSize = latestBlock.transactions.size();
 			//String LBmessage = "lb|" + String.valueOf(localPort) + "|" + String.valueOf(blockchain.getLength()) + "|";
-            MessageLatestBlock message = new MessageLatestBlock(localPort, Blockchain.getLength());
-            if (Blockchain.getLatestBlock() != null) {
+            MessageLatestBlock message = new MessageLatestBlock(localPort, Blockchain.getLength(), transactionSize);
+            if (latestBlock != null) {
 				String latestHash = Blockchain.getLatestBlock().header.calculateHash();
 				if (latestHash != null) {
                     //LBmessage += Base64.getEncoder().encodeToString(latestHash);

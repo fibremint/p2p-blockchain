@@ -100,6 +100,9 @@ public class MessageHandlerRunnable implements Runnable{
                 Blockchain.UTXOs.put(block.transactions.get(0).outputs.get(0).hash, block.transactions.get(0).outputs.get(0));
                 Blockchain.blockchain.add(block);
             }
+
+            inputStream.close();
+            outWriter.close();
         } catch (Exception e) {
             e.printStackTrace();
         }

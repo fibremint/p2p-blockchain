@@ -14,6 +14,7 @@ public class Block implements Serializable {
         this.transactions = new ArrayList<>();
     }
 
+
     /*public void mineBlock(int difficulty) {
         header.merkleRootHash = HashUtil.getMerkleRoot(transactions);
         String target = HashUtil.getDifficultyString(difficulty);
