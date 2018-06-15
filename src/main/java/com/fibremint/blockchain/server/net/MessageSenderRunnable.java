@@ -1,6 +1,6 @@
-package com.fibremint.blockchain.message;
+package com.fibremint.blockchain.server.net;
 
-import com.fibremint.blockchain.net.ServerInfo;
+import com.fibremint.blockchain.server.net.ServerInfo;
 
 import java.io.IOException;
 import java.io.PrintWriter;

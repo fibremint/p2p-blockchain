@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.fibremint.blockchain.util;
+package com.fibremint.blockchain.server.util;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;

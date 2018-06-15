@@ -1,4 +1,4 @@
-package com.fibremint.blockchain.net;
+package com.fibremint.blockchain.server.net;
 
 public class ServerInfo {
 

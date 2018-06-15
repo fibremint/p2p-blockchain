@@ -1,8 +1,8 @@
-package com.fibremint.blockchain.message.model;
+package com.fibremint.blockchain.server.net.message;
 
 public class MessageHeartbeat extends MessageBase {
-    private int localPort;
-    private int sequenceNumber;
+    public int localPort;
+    public int sequenceNumber;
 
     public MessageHeartbeat(int localPort, int sequenceNumber) {
         super(MessageType.heartbeat);

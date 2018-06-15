@@ -1,4 +1,4 @@
-package com.fibremint.blockchain.message.model;
+package com.fibremint.blockchain.server.net.message;
 
 import com.google.gson.annotations.SerializedName;
 

@@ -1,6 +1,6 @@
-package com.fibremint.blockchain.net;
+package com.fibremint.blockchain.server.net;
 
-import com.fibremint.blockchain.message.model.MessageHeartbeat;
+import com.fibremint.blockchain.server.net.message.MessageHeartbeat;
 import com.google.gson.Gson;
 
 import java.io.IOException;

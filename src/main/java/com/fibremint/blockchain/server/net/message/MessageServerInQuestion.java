@@ -1,4 +1,4 @@
-package com.fibremint.blockchain.message.model;
+package com.fibremint.blockchain.server.net.message;
 
 public class MessageServerInQuestion extends MessageBase {
     private int localPort;

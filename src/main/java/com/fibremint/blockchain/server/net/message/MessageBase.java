@@ -1,7 +1,7 @@
-package com.fibremint.blockchain.message.model;
+package com.fibremint.blockchain.server.net.message;
 
 public abstract class MessageBase {
-    private MessageType type;
+    public MessageType type;
 
     public MessageBase(MessageType type) {
         this.type = type;
