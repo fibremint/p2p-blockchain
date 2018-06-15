@@ -2,6 +2,7 @@ package com.fibremint.blockchain.server.net;
 
 import com.fibremint.blockchain.server.blockchain.*;
 import com.fibremint.blockchain.server.net.message.*;
+import com.fibremint.blockchain.server.util.HashUtil;
 import com.fibremint.blockchain.server.util.RuntimeTypeAdapterFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -11,6 +12,8 @@ import com.google.gson.JsonParser;
 import java.io.*;
 import java.net.Socket;
 import java.net.InetSocketAddress;
+import java.security.KeyPair;
+import java.security.PublicKey;
 import java.util.*;
 
 public class MessageHandlerRunnable implements Runnable{
@@ -59,7 +62,8 @@ public class MessageHandlerRunnable implements Runnable{
         		messageType = jsonElement.getAsJsonObject().get("type").getAsString();
         		switch (MessageType.valueOf(messageType)) {
                     case mineBlock:
-                        mineBlockHandler(outWriter);
+//                        mineBlockHandler(outWriter);
+                        mineBlockHandler(gson.fromJson(jsonElement, MessageMineBlock.class), outWriter);
                         break;
                     case catchUp:
                         catchUpHandler(gson.fromJson(jsonElement, MessageCatchUp.class));
@@ -90,7 +94,40 @@ public class MessageHandlerRunnable implements Runnable{
         }
     }
 
-    private void mineBlockHandler(PrintWriter outWriter) {
+    private void mineBlockHandler(MessageMineBlock message, PrintWriter outWriter) {
+        try {
+            Block mineBlock = message.block;
+            byte[] minerPublicKeyBinary = HashUtil.getDecodedKey(message.miner);
+            PublicKey minerPublicKey = HashUtil.generatePublicKey(minerPublicKeyBinary);
+
+            Wallet coinProvider = new Wallet();
+            Transaction genesisTransaction = new Transaction(
+                    coinProvider.publicKey, minerPublicKey,
+                    Blockchain.miningReward, null);
+            genesisTransaction.generateSignature(coinProvider.privateKey);
+            genesisTransaction.hash = "0";
+            genesisTransaction.outputs.add(new TransactionOutput(
+                    genesisTransaction.recipient,
+                    genesisTransaction.value,
+                    genesisTransaction.hash
+            ));
+            mineBlock.addTransaction(genesisTransaction);
+
+            ArrayList<Block> testChain = new ArrayList<>(Blockchain.blockchain);
+            testChain.add(mineBlock);
+            if (Blockchain.isChainValid(testChain)) {
+                Blockchain.blockchain.add(mineBlock);
+                Blockchain.UTXOs.put(mineBlock.transactions.get(0).outputs.get(0).hash, mineBlock.transactions.get(0).outputs.get(0));
+                outWriter.println(gson.toJson(new MessageResult(MessageResult.Type.accepted)));
+            } else {
+                outWriter.println(gson.toJson(new MessageResult(MessageResult.Type.denied, "Process transaction error")));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    /*private void mineBlockHandler(PrintWriter outWriter) {
         try(ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream())) {
             Block mineBlock = (Block) inputStream.readObject();
             ArrayList<Block> testChain = new ArrayList<>(Blockchain.blockchain);
@@ -99,15 +136,13 @@ public class MessageHandlerRunnable implements Runnable{
                 Blockchain.blockchain.add(mineBlock);
                 Blockchain.UTXOs.put(mineBlock.transactions.get(0).outputs.get(0).hash, mineBlock.transactions.get(0).outputs.get(0));
             }
-            Transaction transaction = new Wallet().sendFunds(new Wallet().publicKey, 30f);
-            //Blockchain.getLatestBlock().addTransaction(transaction);
 
             inputStream.close();
             outWriter.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
+    }*/
 
 	private synchronized void catchUpHandler(MessageCatchUp message) {
 		try (ObjectOutputStream outStream = new ObjectOutputStream(clientSocket.getOutputStream())){
