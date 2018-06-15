@@ -27,20 +27,6 @@ public class Transaction implements Serializable {
         this.inputs = inputs;
     }
 
-    public Transaction(PrivateKey minerPrivateKey, PublicKey minerPublicKey, float value) {
-        this.outputs = new ArrayList<>();
-
-        this.recipient = minerPublicKey;
-        this.value = value;
-        this.inputs = null;
-
-        generateGenesisSignature(minerPrivateKey);
-        this.hash = "0";
-//
-//        outputs.add(new TransactionOutput(recipient, value, hash));
-    }
-
-
     public boolean processTransaction() {
         if (!verifySignature()) {
             System.out.println("#Transaction signature failed to verify");

@@ -7,7 +7,7 @@ import java.util.List;
 public class Blockchain {
     public static ArrayList<Block> blockchain = new ArrayList<>();
     public static HashMap<String, TransactionOutput> UTXOs = new HashMap<>();
-    public static int difficulty = 3;
+    public static int difficulty = 5;
     public static float minimumTransaction = 0.1f;
     public static float miningReward = 100f;
 
@@ -61,43 +61,44 @@ public class Blockchain {
             TransactionOutput tempOutput;
             for(int t=0; t <currentBlock.transactions.size(); t++) {
                 Transaction currentTransaction = currentBlock.transactions.get(t);
-
-                if(!currentTransaction.verifySignature()) {
-                    System.out.println("#Signature on Transaction(" + t + ") is Invalid");
-                    return false;
-                }
-                if(currentTransaction.getInputsValue() != currentTransaction.getOutputsValue()) {
-                    System.out.println("#Inputs are note equal to outputs on Transaction(" + t + ")");
-                    return false;
-                }
-
-                for(TransactionInput input: currentTransaction.inputs) {
-                    tempOutput = tempUTXOs.get(input.transactionOutputHash);
-
-                    if(tempOutput == null) {
-                        System.out.println("#Referenced input on Transaction(" + t + ") is Missing");
+                if (!currentTransaction.hash.equals("0")) {
+                    if (!currentTransaction.verifySignature()) {
+                        System.out.println("#Signature on Transaction(" + t + ") is Invalid");
+                        return false;
+                    }
+                    if (currentTransaction.getInputsValue() != currentTransaction.getOutputsValue()) {
+                        System.out.println("#Inputs are not equal to outputs on Transaction(" + t + ")");
                         return false;
                     }
 
-                    if(input.UTXO.value != tempOutput.value) {
-                        System.out.println("#Referenced input Transaction(" + t + ") value is Invalid");
-                        return false;
+                    for (TransactionInput input : currentTransaction.inputs) {
+                        tempOutput = tempUTXOs.get(input.transactionOutputHash);
+
+                        if (tempOutput == null) {
+                            System.out.println("#Referenced input on Transaction(" + t + ") is Missing");
+                            return false;
+                        }
+
+                        if (input.UTXO.value != tempOutput.value) {
+                            System.out.println("#Referenced input Transaction(" + t + ") value is Invalid");
+                            return false;
+                        }
+
+                        tempUTXOs.remove(input.transactionOutputHash);
                     }
 
-                    tempUTXOs.remove(input.transactionOutputHash);
-                }
+                    for (TransactionOutput output : currentTransaction.outputs) {
+                        tempUTXOs.put(output.hash, output);
+                    }
 
-                for(TransactionOutput output: currentTransaction.outputs) {
-                    tempUTXOs.put(output.hash, output);
-                }
-
-                if( currentTransaction.outputs.get(0).recipient != currentTransaction.recipient) {
-                    System.out.println("#Transaction(" + t + ") output reciepient is not who it should be");
-                    return false;
-                }
-                if( currentTransaction.outputs.get(1).recipient != currentTransaction.sender) {
-                    System.out.println("#Transaction(" + t + ") output 'change' is not sender.");
-                    return false;
+                    if (currentTransaction.outputs.get(0).recipient != currentTransaction.recipient) {
+                        System.out.println("#Transaction(" + t + ") output reciepient is not who it should be");
+                        return false;
+                    }
+                    if (currentTransaction.outputs.get(1).recipient != currentTransaction.sender) {
+                        System.out.println("#Transaction(" + t + ") output 'change' is not sender.");
+                        return false;
+                    }
                 }
 
             }
