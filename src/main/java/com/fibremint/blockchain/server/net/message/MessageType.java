@@ -10,7 +10,6 @@ public enum MessageType {
     @SerializedName("properties") properties,
     @SerializedName("result") result,
     @SerializedName("walletBalance") walletBalance,
-    @SerializedName("sendFund") sendFund,
     @SerializedName("serverInQuestion") serverInQuestion,
     @SerializedName("transaction") transaction,
 }

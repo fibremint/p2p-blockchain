@@ -1,12 +1,12 @@
 package com.fibremint.blockchain.server.blockchain;
 
 import com.fibremint.blockchain.server.util.HashUtil;
+import com.fibremint.blockchain.server.util.SignatureUtil;
 
 import java.io.Serializable;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class Transaction implements Serializable {
@@ -32,8 +32,8 @@ public class Transaction implements Serializable {
     public Transaction(String hash, String sender, String recipient, float value, String signature,
                        List<TransactionInput> inputs) {
         this.hash = hash;
-        this.sender = HashUtil.generatePublicKey(HashUtil.getDecodedKey(sender));
-        this.recipient = HashUtil.generatePublicKey(HashUtil.getDecodedKey(recipient));
+        this.sender = SignatureUtil.generatePublicKey(HashUtil.getDecoded(sender));
+        this.recipient = SignatureUtil.generatePublicKey(HashUtil.getDecoded(recipient));
         this.value = value;
         this.signature = HashUtil.getDecoded(signature);
         this.inputs = new ArrayList<>(inputs);
@@ -90,24 +90,24 @@ public class Transaction implements Serializable {
     private String calculateHash() {
         sequence++;
         return HashUtil.applySHA256(
-                HashUtil.getStringFromKey(sender) +
-                        HashUtil.getStringFromKey(recipient) +
+                HashUtil.getEncodedString(sender) +
+                        HashUtil.getEncodedString(recipient) +
                         Float.toString(value) + sequence
         );
     }
 
     public void generateSignature(PrivateKey privateKey) {
-        String data = HashUtil.getStringFromKey(sender) +
-                HashUtil.getStringFromKey(recipient) +
+        String data = HashUtil.getEncodedString(sender) +
+                HashUtil.getEncodedString(recipient) +
                 Float.toString(value);
-        this.signature = HashUtil.applyECDSASignature(privateKey, data);
+        this.signature = SignatureUtil.applyECDSASignature(privateKey, data);
     }
 
     public boolean verifySignature() {
-        String data = HashUtil.getStringFromKey(sender) +
-                HashUtil.getStringFromKey(recipient) +
+        String data = HashUtil.getEncodedString(sender) +
+                HashUtil.getEncodedString(recipient) +
                 Float.toString(value);
-        return HashUtil.verifyECDSASignature(sender, data, signature);
+        return SignatureUtil.verifyECDSASignature(sender, data, signature);
     }
 
 }

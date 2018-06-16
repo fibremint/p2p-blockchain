@@ -3,6 +3,7 @@ package com.fibremint.blockchain.server.net;
 import com.fibremint.blockchain.server.blockchain.*;
 import com.fibremint.blockchain.server.net.message.*;
 import com.fibremint.blockchain.server.util.HashUtil;
+import com.fibremint.blockchain.server.util.SignatureUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -86,7 +87,7 @@ public class MessageHandlerRunnable implements Runnable{
 
     private void walletBalanceHandler(MessageWalletBalance message, PrintWriter outWriter) {
         float total = 0f;
-        PublicKey publicKey = HashUtil.generatePublicKey(HashUtil.getDecodedKey(message.publicKey));
+        PublicKey publicKey = SignatureUtil.generatePublicKey(HashUtil.getDecoded(message.publicKey));
         HashMap<String, TransactionOutput> walletUTXOs = new HashMap<>();
         for(Map.Entry<String, TransactionOutput> item : Blockchain.UTXOs.entrySet()) {
             TransactionOutput UTXO = item.getValue();
@@ -112,8 +113,8 @@ public class MessageHandlerRunnable implements Runnable{
     private void mineBlockHandler(MessageMineBlock message, PrintWriter outWriter) {
         try {
             Block mineBlock = message.block;
-            byte[] minerPublicKeyBinary = HashUtil.getDecodedKey(message.miner);
-            PublicKey minerPublicKey = HashUtil.generatePublicKey(minerPublicKeyBinary);
+            byte[] minerPublicKeyBinary = HashUtil.getDecoded(message.miner);
+            PublicKey minerPublicKey = SignatureUtil.generatePublicKey(minerPublicKeyBinary);
 
             Wallet coinProvider = new Wallet();
             Transaction genesisTransaction = new Transaction(

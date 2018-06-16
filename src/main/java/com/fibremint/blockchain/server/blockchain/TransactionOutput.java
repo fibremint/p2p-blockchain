@@ -19,7 +19,7 @@ public class TransactionOutput implements Serializable {
         this.value = value;
         this.parentTransactionHash = parentTransactionHash;
         this.hash = HashUtil.applySHA256(
-                HashUtil.getStringFromKey(recipient) +
+                HashUtil.getEncodedString(recipient) +
                         Long.toString(timestamp) +
                         Float.toString(value) +
                         parentTransactionHash);
