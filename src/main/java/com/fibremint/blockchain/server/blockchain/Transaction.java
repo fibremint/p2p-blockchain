@@ -1,12 +1,12 @@
 package com.fibremint.blockchain.server.blockchain;
 
-import com.fibremint.blockchain.server.net.message.MessageType;
 import com.fibremint.blockchain.server.util.HashUtil;
 
 import java.io.Serializable;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class Transaction implements Serializable {
@@ -15,8 +15,8 @@ public class Transaction implements Serializable {
     public PublicKey recipient;
     public float value;
     public byte[] signature;
-    public ArrayList<TransactionInput> inputs;
-    public ArrayList<TransactionOutput> outputs;
+    public ArrayList<TransactionInput> inputs = new ArrayList<>();
+    public ArrayList<TransactionOutput> outputs = new ArrayList<>();
 
     private static int sequence = 0;
 
@@ -35,7 +35,7 @@ public class Transaction implements Serializable {
         this.sender = HashUtil.generatePublicKey(HashUtil.getDecodedKey(sender));
         this.recipient = HashUtil.generatePublicKey(HashUtil.getDecodedKey(recipient));
         this.value = value;
-        this.signature = signature.getBytes();
+        this.signature = HashUtil.getDecoded(signature);
         this.inputs = new ArrayList<>(inputs);
     }
     public boolean processTransaction() {

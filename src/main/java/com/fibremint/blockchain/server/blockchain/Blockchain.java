@@ -3,8 +3,9 @@ package com.fibremint.blockchain.server.blockchain;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class Blockchain {
+public class Blockchain implements Cloneable {
     public static ArrayList<Block> blockchain = new ArrayList<>();
     public static HashMap<String, TransactionOutput> UTXOs = new HashMap<>();
     public static int difficulty = 5;
@@ -24,6 +25,17 @@ public class Blockchain {
         return blockchain.size();
     }
 
+    public Object clone() {
+        Object obj = null;
+        try {
+            obj = super.clone();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return obj;
+    }
+
     public static synchronized void catchUp(List<Block> catchUpBlocks, HashMap<String, TransactionOutput> catchUpUXTOs) {
         blockchain.addAll(catchUpBlocks);
         UTXOs = catchUpUXTOs;
@@ -34,7 +46,7 @@ public class Blockchain {
         Block currentBlock;
         Block previousBlock;
         String hashTarget = new String(new char[Blockchain.difficulty]).replace('\0', '0');
-        HashMap<String,TransactionOutput> tempUTXOs = new HashMap<>(); //a temporary working list of unspent transactions at a given block state.
+        HashMap<String,TransactionOutput> tempUTXOs = new HashMap<>(UTXOs); //a temporary working list of unspent transactions at a given block state.
 
         //loop through blockchain to check hashes:
         for(int i=1; i < blockchain.size(); i++) {

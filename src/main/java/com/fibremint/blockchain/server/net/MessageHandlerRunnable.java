@@ -234,37 +234,37 @@ public class MessageHandlerRunnable implements Runnable{
        }
     }
 
+    // TODO: Implement validate transaction.
     private void transactionHandler(MessageTransaction message, PrintWriter outWriter) {
-        try {
-           /* ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
-            Transaction transaction = (Transaction) inputStream.readObject();
-
-            if (Blockchain.getLatestBlock().addTransaction(transaction))
-                outWriter.print(gson.toJson(new MessageResult(MessageResult.Type.accepted)));
-    		else
-                outWriter.print(gson.toJson(new MessageResult(MessageResult.Type.denied)));*/
-
-           Transaction transaction = new Transaction(message.hash, message.sender,
-                   message.recipient, message.value, message.signature, message.inputs);
-
-            ArrayList<Block> testChain = new ArrayList<>(Blockchain.blockchain);
-            Block latestbBlock = testChain.get(testChain.size()-1);
-            latestbBlock.addTransaction(transaction);
-            if (Blockchain.isChainValid(testChain) && Blockchain.getLatestBlock() != null) {
-                for(TransactionInput input : message.inputs)
-                    Blockchain.UTXOs.remove(input.transactionOutputHash);
+        if (Blockchain.getLatestBlock() != null) {
+            try {
+                Transaction transaction = new Transaction(message.hash, message.sender,
+                        message.recipient, message.value, message.signature, message.inputs);
                 Blockchain.getLatestBlock().addTransaction(transaction);
 
                 outWriter.println(gson.toJson(new MessageResult(MessageResult.Type.accepted, MessageType.transaction)));
-            } else {
-                outWriter.println(gson.toJson(new MessageResult(MessageResult.Type.denied, MessageType.transaction,
-                        "Transaction error")));
-            }
+/*                ArrayList<Block> testChain = new ArrayList<>(Blockchain.blockchain);
 
-           outWriter.flush();
-		} catch (Exception e) {
-    		e.printStackTrace();
-		}
+                Block latestBlock = testChain.get(testChain.size() - 1);
+                latestBlock.addTransaction(transaction);
+                if (Blockchain.isChainValid(testChain)) {
+                    for (TransactionInput input : message.inputs)
+                        Blockchain.UTXOs.remove(input.transactionOutputHash);
+                    Blockchain.getLatestBlock().addTransaction(transaction);
+
+                    outWriter.println(gson.toJson(new MessageResult(MessageResult.Type.accepted, MessageType.transaction)));
+                } else {
+                    outWriter.println(gson.toJson(new MessageResult(MessageResult.Type.denied, MessageType.transaction,
+                            "Transaction error")));
+                }*/
+
+                outWriter.flush();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("Not available mined blocks");
+        }
 	}
 
     private void heartbeatHandler(MessageHeartbeat message) {

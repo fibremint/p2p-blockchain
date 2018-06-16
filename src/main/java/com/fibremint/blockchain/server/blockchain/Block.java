@@ -4,6 +4,7 @@ import com.fibremint.blockchain.server.util.HashUtil;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Block implements Serializable {
     public BlockHeader header;
@@ -39,6 +40,4 @@ public class Block implements Serializable {
         System.out.println("Transaction successfully added to block");
         return true;
     }
-
-
 }

@@ -119,6 +119,14 @@ public class HashUtil {
         return Base64.getDecoder().decode(keyString);
     }
 
+    public static String getEncodedString(byte[] byteArray) {
+        return Base64.getEncoder().encodeToString(byteArray);
+    }
+
+    public static byte[] getDecoded(String encodedString) {
+        return Base64.getDecoder().decode(encodedString);
+    }
+
     public static String getDifficultyString(int difficulty) {
         return new String(new char[difficulty]).replace('\0', '0');
     }
