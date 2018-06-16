@@ -3,7 +3,6 @@ package com.fibremint.blockchain.server.net;
 import com.fibremint.blockchain.server.blockchain.*;
 import com.fibremint.blockchain.server.net.message.*;
 import com.fibremint.blockchain.server.util.HashUtil;
-import com.fibremint.blockchain.server.util.RuntimeTypeAdapterFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -29,18 +28,6 @@ public class MessageHandlerRunnable implements Runnable{
         this.serverStatus = serverStatus;
         this.localPort = localPort;
 
-       /* RuntimeTypeAdapterFactory<MessageBase> messageAdapterFactory = RuntimeTypeAdapterFactory
-                .of(MessageBase.class, "Type")
-                .registerSubtype(MessageMineBlock.class, "mineBlock")
-                .registerSubtype(MessageCatchUp.class, "catchUp")
-                .registerSubtype(MessageHeartbeat.class, "heartbeat")
-                .registerSubtype(MessageLatestBlock.class, "latestBlock")
-                .registerSubtype(MessageProperties.class, "properties")
-                .registerSubtype(MessageTransaction.class, "transaction")
-                .registerSubtype(MessageServerInQuestion.class, "serverInQuestion")
-                .registerSubtype(MessageResult.class, "result");
-
-        gson = new GsonBuilder().registerTypeAdapterFactory(messageAdapterFactory).create();*/
        gson = new GsonBuilder().create();
     }
 
@@ -105,11 +92,20 @@ public class MessageHandlerRunnable implements Runnable{
             TransactionOutput UTXO = item.getValue();
             if (UTXO.isMine(publicKey)) {
                 total += UTXO.value;
-                walletUTXOs.put(UTXO.hash, UTXO);
+                if (!message.isBalanceOnly)
+                    walletUTXOs.put(UTXO.hash, UTXO);
+
             }
         }
 
-        outWriter.println(gson.toJson(new MessageWalletBalance(HashUtil.getEncodedKey(publicKey), total, walletUTXOs)));
+        if (!message.isBalanceOnly) {
+            outWriter.println(gson.toJson(new MessageWalletBalance(HashUtil.getEncodedKey(publicKey),
+                    message.isBalanceOnly, total, walletUTXOs)));
+        } else {
+            outWriter.println(gson.toJson(new MessageWalletBalance(HashUtil.getEncodedKey(publicKey),
+                    message.isBalanceOnly, total)));
+        }
+
         outWriter.flush();
     }
 
@@ -228,7 +224,6 @@ public class MessageHandlerRunnable implements Runnable{
            outWriter.println(gson.toJson(new MessageProperties(blockHash,
                    Blockchain.difficulty, Blockchain.minimumTransaction, Blockchain.miningReward)));
            outWriter.flush();
-           //outWriter.close();
        } catch (Exception e) {
            e.printStackTrace();
        }
