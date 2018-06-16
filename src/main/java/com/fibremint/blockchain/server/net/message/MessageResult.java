@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName;
 
 public class MessageResult extends MessageBase {
     private Type result;
+    public MessageType attribute;
     private String description;
 
     public MessageResult(Type result) {
@@ -11,9 +12,16 @@ public class MessageResult extends MessageBase {
         this.result = result;
     }
 
-    public MessageResult(Type result, String description) {
+    public MessageResult(Type result, MessageType attribute) {
         super(MessageType.result);
         this.result = result;
+        this.attribute = attribute;
+    }
+
+    public MessageResult(Type result, MessageType attribute, String description) {
+        super(MessageType.result);
+        this.result = result;
+        this.attribute = attribute;
         this.description = description;
     }
 

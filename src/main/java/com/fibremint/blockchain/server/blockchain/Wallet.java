@@ -20,12 +20,10 @@ public class Wallet {
         this.publicKey = keyPair.getPublic();
     }
 
-    // TODO: check key is valid
-    public Wallet(PrivateKey privateKey, PublicKey publicKey) {
-        this.privateKey = privateKey;
+/*
+    public Wallet(PublicKey publicKey) {
         this.publicKey = publicKey;
     }
-
 
     public float getBalance() {
         float total = 0;
@@ -39,8 +37,9 @@ public class Wallet {
 
         return total;
     }
+*/
 
-    public Transaction sendFunds(PublicKey recipient, float value) {
+    /*public Transaction sendFunds(PublicKey recipient, float value) {
         if (getBalance() < value) {
             System.out.println("#Not enough funds to send transaction. Transaction discarded");
             return null;
@@ -62,5 +61,5 @@ public class Wallet {
             UTXOs.remove(input.transactionOutputHash);
 
         return newTransaction;
-    }
+    }*/
 }

@@ -12,7 +12,6 @@ import com.google.gson.JsonParser;
 import java.io.*;
 import java.net.Socket;
 import java.net.InetSocketAddress;
-import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.*;
 
@@ -30,7 +29,7 @@ public class MessageHandlerRunnable implements Runnable{
         this.serverStatus = serverStatus;
         this.localPort = localPort;
 
-        RuntimeTypeAdapterFactory<MessageBase> messageAdapterFactory = RuntimeTypeAdapterFactory
+       /* RuntimeTypeAdapterFactory<MessageBase> messageAdapterFactory = RuntimeTypeAdapterFactory
                 .of(MessageBase.class, "Type")
                 .registerSubtype(MessageMineBlock.class, "mineBlock")
                 .registerSubtype(MessageCatchUp.class, "catchUp")
@@ -41,7 +40,8 @@ public class MessageHandlerRunnable implements Runnable{
                 .registerSubtype(MessageServerInQuestion.class, "serverInQuestion")
                 .registerSubtype(MessageResult.class, "result");
 
-        gson = new GsonBuilder().registerTypeAdapterFactory(messageAdapterFactory).create();
+        gson = new GsonBuilder().registerTypeAdapterFactory(messageAdapterFactory).create();*/
+       gson = new GsonBuilder().create();
     }
 
     public void run() {
@@ -62,7 +62,6 @@ public class MessageHandlerRunnable implements Runnable{
         		messageType = jsonElement.getAsJsonObject().get("type").getAsString();
         		switch (MessageType.valueOf(messageType)) {
                     case mineBlock:
-//                        mineBlockHandler(outWriter);
                         mineBlockHandler(gson.fromJson(jsonElement, MessageMineBlock.class), outWriter);
                         break;
                     case catchUp:
@@ -78,10 +77,13 @@ public class MessageHandlerRunnable implements Runnable{
                         propertiesHandler(outWriter);
                         break;
                     case transaction:
-        				transactionHandler(outWriter);
+        				transactionHandler(gson.fromJson(jsonElement, MessageTransaction.class), outWriter);
         				break;
                     case serverInQuestion:
                         serverInQuestionHandler(gson.fromJson(jsonElement, MessageServerInQuestion.class));
+                        break;
+                    case walletBalance:
+                        walletBalanceHandler(gson.fromJson(jsonElement, MessageWalletBalance.class), outWriter);
                         break;
         			default:
                        	outWriter.print(gson.toJson(new MessageResult(MessageResult.Type.error)));
@@ -92,6 +94,23 @@ public class MessageHandlerRunnable implements Runnable{
         } catch (IOException e) {
             //e.printStackTrace();
         }
+    }
+
+
+    private void walletBalanceHandler(MessageWalletBalance message, PrintWriter outWriter) {
+        float total = 0f;
+        PublicKey publicKey = HashUtil.generatePublicKey(HashUtil.getDecodedKey(message.publicKey));
+        HashMap<String, TransactionOutput> walletUTXOs = new HashMap<>();
+        for(Map.Entry<String, TransactionOutput> item : Blockchain.UTXOs.entrySet()) {
+            TransactionOutput UTXO = item.getValue();
+            if (UTXO.isMine(publicKey)) {
+                total += UTXO.value;
+                walletUTXOs.put(UTXO.hash, UTXO);
+            }
+        }
+
+        outWriter.println(gson.toJson(new MessageWalletBalance(HashUtil.getEncodedKey(publicKey), total, walletUTXOs)));
+        outWriter.flush();
     }
 
     private void mineBlockHandler(MessageMineBlock message, PrintWriter outWriter) {
@@ -117,32 +136,18 @@ public class MessageHandlerRunnable implements Runnable{
             testChain.add(mineBlock);
             if (Blockchain.isChainValid(testChain)) {
                 Blockchain.blockchain.add(mineBlock);
-                Blockchain.UTXOs.put(mineBlock.transactions.get(0).outputs.get(0).hash, mineBlock.transactions.get(0).outputs.get(0));
-                outWriter.println(gson.toJson(new MessageResult(MessageResult.Type.accepted)));
+                Blockchain.UTXOs.put(mineBlock.transactions.get(0).outputs.get(0).hash,
+                        mineBlock.transactions.get(0).outputs.get(0));
+                outWriter.println(gson.toJson(new MessageResult(MessageResult.Type.accepted, MessageType.mineBlock)));
             } else {
-                outWriter.println(gson.toJson(new MessageResult(MessageResult.Type.denied, "Process transaction error")));
+                outWriter.println(gson.toJson(new MessageResult(MessageResult.Type.denied, MessageType.mineBlock,
+                        "Process transaction error")));
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-    /*private void mineBlockHandler(PrintWriter outWriter) {
-        try(ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream())) {
-            Block mineBlock = (Block) inputStream.readObject();
-            ArrayList<Block> testChain = new ArrayList<>(Blockchain.blockchain);
-            testChain.add(mineBlock);
-            if (Blockchain.isChainValid(testChain)) {
-                Blockchain.blockchain.add(mineBlock);
-                Blockchain.UTXOs.put(mineBlock.transactions.get(0).outputs.get(0).hash, mineBlock.transactions.get(0).outputs.get(0));
-            }
-
-            inputStream.close();
-            outWriter.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }*/
 
 	private synchronized void catchUpHandler(MessageCatchUp message) {
 		try (ObjectOutputStream outStream = new ObjectOutputStream(clientSocket.getOutputStream())){
@@ -229,17 +234,34 @@ public class MessageHandlerRunnable implements Runnable{
        }
     }
 
-    private void transactionHandler(PrintWriter outWriter) {
+    private void transactionHandler(MessageTransaction message, PrintWriter outWriter) {
         try {
-            ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
+           /* ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
             Transaction transaction = (Transaction) inputStream.readObject();
 
             if (Blockchain.getLatestBlock().addTransaction(transaction))
                 outWriter.print(gson.toJson(new MessageResult(MessageResult.Type.accepted)));
     		else
-                outWriter.print(gson.toJson(new MessageResult(MessageResult.Type.denied)));
+                outWriter.print(gson.toJson(new MessageResult(MessageResult.Type.denied)));*/
 
-            outWriter.flush();
+           Transaction transaction = new Transaction(message.hash, message.sender,
+                   message.recipient, message.value, message.signature, message.inputs);
+
+            ArrayList<Block> testChain = new ArrayList<>(Blockchain.blockchain);
+            Block latestbBlock = testChain.get(testChain.size()-1);
+            latestbBlock.addTransaction(transaction);
+            if (Blockchain.isChainValid(testChain) && Blockchain.getLatestBlock() != null) {
+                for(TransactionInput input : message.inputs)
+                    Blockchain.UTXOs.remove(input.transactionOutputHash);
+                Blockchain.getLatestBlock().addTransaction(transaction);
+
+                outWriter.println(gson.toJson(new MessageResult(MessageResult.Type.accepted, MessageType.transaction)));
+            } else {
+                outWriter.println(gson.toJson(new MessageResult(MessageResult.Type.denied, MessageType.transaction,
+                        "Transaction error")));
+            }
+
+           outWriter.flush();
 		} catch (Exception e) {
     		e.printStackTrace();
 		}

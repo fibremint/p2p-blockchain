@@ -30,33 +30,6 @@ public class BlockHeader implements Serializable {
         this.nonce = nonce;
     }
 
-    /*public int getVersion() {
-        return version;
-    }
-
-    public String getPreviousHash() {
-        return previousHash;
-    }
-
-    public int getMerkleRootHash() {
-        return merkleRootHash;
-    }
-
-    public void setMerkleRootHash(int merkleRootHash) {
-        this.merkleRootHash = merkleRootHash;
-    }
-
-    public long getTimestamp() {
-        return timestamp;
-    }
-
-    public String getAsSerialized() {
-        return Integer.toString(version)
-                + previousHash
-                + Integer.toString(merkleRootHash)
-                + Long.toString(timestamp);
-    }*/
-
     public String calculateHash() {
         return HashUtil.applySHA256(
                 previousHash +
@@ -65,10 +38,4 @@ public class BlockHeader implements Serializable {
                         merkleRootHash
         );
     }
-
-    /*public void calculateHash() {
-        this.hash =  HashUtil.applySHA256(header.getAsSerialized() + new Gson().toJson(transactions));
-    }*/
-
-
 }

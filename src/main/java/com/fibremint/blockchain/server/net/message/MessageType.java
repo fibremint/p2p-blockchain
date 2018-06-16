@@ -9,7 +9,8 @@ public enum MessageType {
     @SerializedName("mineBlock") mineBlock,
     @SerializedName("properties") properties,
     @SerializedName("result") result,
+    @SerializedName("walletBalance") walletBalance,
     @SerializedName("sendFund") sendFund,
     @SerializedName("serverInQuestion") serverInQuestion,
-    @SerializedName("transaction") transaction
+    @SerializedName("transaction") transaction,
 }

@@ -1,11 +1,13 @@
 package com.fibremint.blockchain.server.blockchain;
 
+import com.fibremint.blockchain.server.net.message.MessageType;
 import com.fibremint.blockchain.server.util.HashUtil;
 
 import java.io.Serializable;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Transaction implements Serializable {
     public String hash;
@@ -27,6 +29,15 @@ public class Transaction implements Serializable {
         this.inputs = inputs;
     }
 
+    public Transaction(String hash, String sender, String recipient, float value, String signature,
+                       List<TransactionInput> inputs) {
+        this.hash = hash;
+        this.sender = HashUtil.generatePublicKey(HashUtil.getDecodedKey(sender));
+        this.recipient = HashUtil.generatePublicKey(HashUtil.getDecodedKey(recipient));
+        this.value = value;
+        this.signature = signature.getBytes();
+        this.inputs = new ArrayList<>(inputs);
+    }
     public boolean processTransaction() {
         if (!verifySignature()) {
             System.out.println("#Transaction signature failed to verify");
@@ -92,12 +103,6 @@ public class Transaction implements Serializable {
         this.signature = HashUtil.applyECDSASignature(privateKey, data);
     }
 
-    public void generateGenesisSignature(PrivateKey privateKey) {
-        String data = HashUtil.getStringFromKey(recipient) +
-                Float.toString(value);
-        this.signature = HashUtil.applyECDSASignature(privateKey, data);
-
-    }
     public boolean verifySignature() {
         String data = HashUtil.getStringFromKey(sender) +
                 HashUtil.getStringFromKey(recipient) +
