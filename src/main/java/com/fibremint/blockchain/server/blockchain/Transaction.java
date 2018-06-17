@@ -20,7 +20,6 @@ public class Transaction {
 
     private static int sequence = 0;
 
-    // TODO: remove boolean parameter
     public Transaction(String minerEncodedPublicKey, String latestHash) {
         Wallet coinProvider = new Wallet();
 
