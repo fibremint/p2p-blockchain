@@ -40,6 +40,9 @@ public class Blockchain {
 
     // TODO: validation would be required.
     public synchronized void catchUp(List<Block> catchUpBlocks, HashMap<String, TransactionOutput> catchUpUXTOs) {
+        if (!isBlockchainEmpty()) {
+            blockchain.remove(blockchain.size()-1);
+        }
         blockchain.addAll(catchUpBlocks);
         UTXOs = catchUpUXTOs;
     }

@@ -4,7 +4,6 @@ package com.fibremint.blockchain.server.blockchain;
 import com.fibremint.blockchain.server.net.message.MessageBlock;
 import com.fibremint.blockchain.server.net.message.MessageTransaction;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 
 public class Block {
