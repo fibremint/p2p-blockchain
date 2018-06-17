@@ -17,9 +17,7 @@ import java.util.HashMap;
 
 public class BlockchainServer {
     private int localPort;
-    private String remoteHost;
-    private int remotePort;
-
+    private ServerInfo remoteServerInfo;
     private HashMap<ServerInfo, Date> remoteServerStatus = new HashMap<>();
     private ServerSocket serverSocket;
     private Socket clientSocket;
@@ -28,8 +26,7 @@ public class BlockchainServer {
 
     public BlockchainServer(int localPort, String remoteHost, int remotePort) {
         this.localPort = localPort;
-        this.remoteHost = remoteHost;
-        this.remotePort = remotePort;
+        this.remoteServerInfo = new ServerInfo(remoteHost, remotePort);
         this.blockchain = new Blockchain();
     }
 
@@ -45,12 +42,8 @@ public class BlockchainServer {
         return localPort;
     }
 
-    public String getRemoteHost() {
-        return remoteHost;
-    }
-
-    public int getRemotePort() {
-        return remotePort;
+    public ServerInfo getRemoteServerInfo() {
+        return remoteServerInfo;
     }
 
     public ServerSocket getServerSocket() {
@@ -65,7 +58,7 @@ public class BlockchainServer {
         Logger logger = LoggerFactory.getLogger(BlockchainServer.class);
         logger.info("Block chain server started");
 
-        remoteServerStatus.put(new ServerInfo(remoteHost, remotePort), new Date());
+        remoteServerStatus.put(remoteServerInfo, new Date());
         //periodically send heartbeats
         new Thread(new HeartBeatPeriodicRunnable(this)).start();
         //periodically catchup

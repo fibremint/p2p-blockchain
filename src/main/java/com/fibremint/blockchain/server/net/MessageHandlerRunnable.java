@@ -33,7 +33,7 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
         super(blockchainServer);
         this.clientSocket = blockchainServer.getClientSocket();
         this.serverStatus = blockchainServer.getRemoteServerStatus();
-        this.localPort = blockchainServer.getRemotePort();
+        this.localPort = blockchainServer.getLocalPort();
 
         this.blockchain = blockchainServer.getBlockchain();
 
@@ -96,7 +96,7 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
         float total = 0f;
         PublicKey publicKey = SignatureUtil.generatePublicKey(HashUtil.getDecoded(message.publicKey));
         HashMap<String, TransactionOutput> walletUTXOs = new HashMap<>();
-        for(Map.Entry<String, TransactionOutput> item : getBlockchainServer().getBlockchain().UTXOs.entrySet()) {
+        for(Map.Entry<String, TransactionOutput> item : blockchain.UTXOs.entrySet()) {
             TransactionOutput UTXO = item.getValue();
             if (UTXO.isMine(publicKey)) {
                 total += UTXO.value;
@@ -136,23 +136,36 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
         }
     }
 
-    // TODO: change send json object.
 	private synchronized void catchUpHandler(MessageCatchUp message) {
-		try (ObjectOutputStream outStream = new ObjectOutputStream(clientSocket.getOutputStream())){
+/*		try (ObjectOutputStream outStream = new ObjectOutputStream(clientSocket.getOutputStream())){
             List<Block> catchUpBlocks = new ArrayList<>();
 
             for(int i = message.blockIndex; i < blockchain.getLength(); i++)
                 catchUpBlocks.add(blockchain.blockchain.get(i));
 
-            outStream.writeObject(catchUpBlocks);
+*//*            outStream.writeObject(catchUpBlocks);
             outStream.flush();
 
             outStream.writeObject(blockchain.UTXOs);
-            outStream.flush();
+            outStream.flush();*//*
 
 		} catch (Exception e) {
 		    e.printStackTrace();
-		}
+		}*/
+        List<Block> catchUpBlocks = new ArrayList<>();
+        for(int i = message.blockIndex; i < blockchain.getLength(); i++)
+            catchUpBlocks.add(blockchain.blockchain.get(i));
+
+        HashMap<String, MessageTransactionOutput> catchUpUTXOs = new HashMap<>();
+        for(Map.Entry<String, TransactionOutput> item : blockchain.UTXOs.entrySet()) {
+            TransactionOutput UTXO = item.getValue();
+            catchUpUTXOs.put(UTXO.hash, new MessageTransactionOutput(UTXO));
+        }
+
+        ServerInfo serverInfo = super.getBlockchainServer().getRemoteServerInfo();
+        String jsonMessage = gson.toJson(new MessageCatchUp(message.blockIndex, catchUpBlocks, catchUpUTXOs));
+
+        new Thread(new MessageSenderRunnable(serverInfo, jsonMessage)).start();
 	}
 
     private synchronized void latestBlockHandler(MessageLatestBlock message) {
