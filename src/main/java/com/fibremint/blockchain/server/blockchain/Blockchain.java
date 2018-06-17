@@ -35,7 +35,7 @@ public class Blockchain {
     }
 
     public String getLatestHash() {
-        return (isBlockchainEmpty()) ? blockchain.get(blockchain.size() - 1).header.hash : "0";
+        return (!isBlockchainEmpty()) ? blockchain.get(blockchain.size() - 1).header.hash : "0";
     }
 
     public int getLength() {
