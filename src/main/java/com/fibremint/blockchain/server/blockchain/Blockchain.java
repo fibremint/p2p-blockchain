@@ -12,15 +12,6 @@ public class Blockchain {
     public static float minimumTransaction = 0.1f;
     public static float miningReward = 100f;
 
-    public Blockchain() {
-
-    }
-
-    public Blockchain(Blockchain blockchain) {
-        this.blockchain = new ArrayList<>(blockchain.blockchain);
-        this.UTXOs = new HashMap<>(blockchain.UTXOs);
-    }
-
     public Block getBlock(String blockHash) {
         return blockchain.stream().filter(block -> blockHash.equals(block.header.hash))
                 .findFirst().orElse(null);

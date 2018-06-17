@@ -119,7 +119,7 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
         outWriter.flush();
     }
 
-    private void mineBlockHandler(MessageMineBlock message, PrintWriter outWriter) {
+    private synchronized void mineBlockHandler(MessageMineBlock message, PrintWriter outWriter) {
         try {
             Block mineBlock = message.block;
             Transaction miningTransaction = new Transaction(message.miner);
@@ -252,13 +252,13 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
     }
 
     // TODO: Implement validate transaction.
-    private void transactionHandler(MessageTransaction message, PrintWriter outWriter) {
+    private synchronized void transactionHandler(MessageTransaction message, PrintWriter outWriter) {
         if (blockchain.getLatestBlock() != null) {
             Transaction transaction = new Transaction(message);
 
            if (blockchain.addTransaction(transaction)) {
-               for (MessageTransactionInput messageTransactionInput : message.inputs)
-                   blockchain.UTXOs.remove(messageTransactionInput.transactionOutputHash);
+               /*for (MessageTransactionInput messageTransactionInput : message.inputs)
+                   blockchain.UTXOs.remove(messageTransactionInput.transactionOutputHash);*/
                outWriter.println(gson.toJson(new MessageResult(MessageResult.Type.accepted, MessageType.transaction)));
            } else {
                 outWriter.println(gson.toJson(new MessageResult(MessageResult.Type.error, MessageType.transaction,

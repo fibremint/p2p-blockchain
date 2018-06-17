@@ -8,10 +8,6 @@ public class TransactionInput implements Serializable {
     public String transactionOutputHash;
     public TransactionOutput UTXO;
 
-    public TransactionInput(String transactionOutputHash) {
-        this.transactionOutputHash = transactionOutputHash;
-    }
-
     public TransactionInput(MessageTransactionInput messageTransactionInput) {
         this.transactionOutputHash = messageTransactionInput.transactionOutputHash;
         this.UTXO = new TransactionOutput(messageTransactionInput.UTXO);
