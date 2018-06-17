@@ -122,7 +122,7 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
     private void mineBlockHandler(MessageMineBlock message, PrintWriter outWriter) {
         try {
             Block mineBlock = message.block;
-            Transaction miningTransaction = new Transaction(message.miner, blockchain.getLatestHash());
+            Transaction miningTransaction = new Transaction(message.miner);
 
             if (blockchain.addBlock(mineBlock) && blockchain.addTransaction(miningTransaction)) {
                 blockchain.UTXOs.put(mineBlock.transactions.get(0).outputs.get(0).hash,
@@ -139,21 +139,6 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
     }
 
 	private synchronized void catchUpHandler(MessageCatchUp message) {
-/*		try (ObjectOutputStream outStream = new ObjectOutputStream(clientSocket.getOutputStream())){
-            List<Block> catchUpBlocks = new ArrayList<>();
-
-            for(int i = message.blockIndex; i < blockchain.getLength(); i++)
-                catchUpBlocks.add(blockchain.blockchain.get(i));
-
-*//*            outStream.writeObject(catchUpBlocks);
-            outStream.flush();
-
-            outStream.writeObject(blockchain.UTXOs);
-            outStream.flush();*//*
-
-		} catch (Exception e) {
-		    e.printStackTrace();
-		}*/
         try (PrintWriter outWriter = new PrintWriter(new PrintWriter(clientSocket.getOutputStream()))) {
             List<Block> catchUpBlocks = new ArrayList<>();
             for (int i = message.blockIndex; i < blockchain.getLength(); i++)
@@ -187,18 +172,10 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
 
     		int localTransactionLength = blockchain.getLength();
     		if (localLatestBlock != null) localTransactionLength = localLatestBlock.transactions.size();
-
-    		boolean logic1 = localLatestBlockHash.equals(messageLatestBlock.getLatestHash());
-    		boolean logic2 = blockchain.getLength() >= messageLatestBlock.blockchainLength;
-    		boolean logic3 = localTransactionLength >= messageLatestBlock.transactionLength;
-            /*if (localLatestBlockHash.equals(messageLatestBlock.getLatestHash())
+            if (localLatestBlockHash.equals(messageLatestBlock.getLatestHash())
                     && (blockchain.getLength() >= messageLatestBlock.blockchainLength
                     && localTransactionLength >= messageLatestBlock.transactionLength)) {
                               //no catchup necessary
-                return;*/
-
-            if ((logic1) && (logic2 && logic3)) {
-                //no catchup necessary
                 return;
 
             } else {
@@ -218,35 +195,29 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
     			outWriter.println(gson.toJson(new MessageCatchUp(catchUpBlockIndex)));
                 outWriter.flush();
 
-  /*              ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
-
-*//*                List<Block> catchUpBlocks = (List<Block>) inputStream.readObject();
-                HashMap<String, TransactionOutput> catchUpUTXOs = (HashMap) inputStream.readObject();
-
-                inputStream.close();*/
                 BufferedReader inputReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 JsonElement messageJson = jsonParser.parse(inputReader.readLine());
-                MessageCatchUp messageCatchUp = null;
+
                 try {
-                    messageCatchUp = gson.fromJson(messageJson, MessageCatchUp.class);
+                    MessageCatchUp messageCatchUp = gson.fromJson(messageJson, MessageCatchUp.class);
+                    ArrayList<Block> catchUpBlocks = new ArrayList<>();
+                    for(MessageBlock messageBlock : messageCatchUp.catchUpBlocks) {
+                        catchUpBlocks.add(new Block(messageBlock));
+                    }
+
+                    HashMap<String, TransactionOutput> catchUpUTXOs = new HashMap<>();
+                    for(Map.Entry<String, MessageTransactionOutput> item : messageCatchUp.UTXOs.entrySet()) {
+                        MessageTransactionOutput UTXO = item.getValue();
+                        catchUpUTXOs.put(UTXO.hash, new TransactionOutput(UTXO));
+                    }
+
+                    inputReader.close();
+                    socket.close();
+
+                    blockchain.catchUp(catchUpBlocks, catchUpUTXOs);
                 } catch (RuntimeException e) {
                     e.printStackTrace();
                 }
-                ArrayList<Block> catchUpBlocks = new ArrayList<>();
-                for(MessageBlock messageBlock : messageCatchUp.catchUpBlocks) {
-                    catchUpBlocks.add(new Block(messageBlock));
-                }
-
-                HashMap<String, TransactionOutput> catchUpUTXOs = new HashMap<>();
-                for(Map.Entry<String, MessageTransactionOutput> item : messageCatchUp.UTXOs.entrySet()) {
-                    MessageTransactionOutput UTXO = item.getValue();
-                    catchUpUTXOs.put(UTXO.hash, new TransactionOutput(UTXO));
-                }
-
-                inputReader.close();
-    			socket.close();
-
-    			blockchain.catchUp(catchUpBlocks, catchUpUTXOs);
     		}
     	
     	} catch (Exception e) {

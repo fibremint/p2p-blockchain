@@ -22,7 +22,6 @@ public class MessageTransaction extends MessageBase {
         this.recipient = HashUtil.getEncodedKey(transaction.recipient);
         this.value = transaction.value;
         this.signature = HashUtil.getEncodedString(transaction.signature);
-        //this.inputs = transaction.inputs;
         for(TransactionInput transactionInput : transaction.inputs) {
             inputs.add(new MessageTransactionInput(transactionInput));
         }

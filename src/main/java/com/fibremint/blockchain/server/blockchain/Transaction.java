@@ -20,7 +20,7 @@ public class Transaction {
 
     private static int sequence = 0;
 
-    public Transaction(String minerEncodedPublicKey, String latestHash) {
+    public Transaction(String minerEncodedPublicKey) {
         Wallet coinProvider = new Wallet();
 
         this.sender = coinProvider.publicKey;
@@ -30,7 +30,7 @@ public class Transaction {
         this.outputs = new ArrayList<>();
 
         generateSignature(coinProvider.privateKey);
-        this.hash = latestHash;
+        this.hash = "0";
         this.outputs.add(new TransactionOutput(
                 this.recipient,
                 this.value,
