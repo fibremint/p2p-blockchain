@@ -34,8 +34,8 @@ public class HashUtil {
         }
     }
 
-    public static String getEncodedString(Key key) {
-        return Base64.getEncoder().encodeToString(key.getEncoded());
+    public static String getEncodedString(byte[] byteArray) {
+        return Base64.getEncoder().encodeToString(byteArray);
     }
 
     public static String getEncodedKey(Key key) {

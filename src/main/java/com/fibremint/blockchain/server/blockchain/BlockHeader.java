@@ -13,7 +13,7 @@ public class BlockHeader implements Serializable {
     private long timestamp;
     public int nonce;
 
-    public BlockHeader(String previousHash) {
+/*    public BlockHeader(String previousHash) {
         this.version = 1;
         this.previousHash = previousHash;
         this.timestamp = new Date().getTime();
@@ -28,7 +28,7 @@ public class BlockHeader implements Serializable {
         this.merkleRootHash = merkleRootHash;
         this.timestamp = timestamp;
         this.nonce = nonce;
-    }
+    }*/
 
     public String calculateHash() {
         return HashUtil.applySHA256(

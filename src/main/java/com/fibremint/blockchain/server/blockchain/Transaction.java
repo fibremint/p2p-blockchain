@@ -1,12 +1,12 @@
 package com.fibremint.blockchain.server.blockchain;
 
+import com.fibremint.blockchain.server.net.message.MessageTransaction;
 import com.fibremint.blockchain.server.util.HashUtil;
 import com.fibremint.blockchain.server.util.SignatureUtil;
 
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
-import java.util.List;
 
 public class Transaction {
     public String hash;
@@ -27,6 +27,7 @@ public class Transaction {
         this.signature = transaction.signature;
     }
 
+    // TODO: remove boolean parameter
     public Transaction(String minerEncodedPublicKey, boolean isBlockchainEmpty) {
         Wallet coinProvider = new Wallet();
 
@@ -45,14 +46,13 @@ public class Transaction {
         ));
     }
 
-    public Transaction(String hash, String sender, String recipient, float value, String signature,
-                       List<TransactionInput> inputs) {
-        this.hash = hash;
-        this.sender = SignatureUtil.generatePublicKey(HashUtil.getDecoded(sender));
-        this.recipient = SignatureUtil.generatePublicKey(HashUtil.getDecoded(recipient));
-        this.value = value;
-        this.signature = HashUtil.getDecoded(signature);
-        this.inputs = new ArrayList<>(inputs);
+    public Transaction(MessageTransaction message) {
+        this.hash = message.hash;
+        this.sender = SignatureUtil.generatePublicKey(HashUtil.getDecoded(message.sender));
+        this.recipient = SignatureUtil.generatePublicKey(HashUtil.getDecoded(message.recipient));
+        this.value = message.value;
+        this.signature = HashUtil.getDecoded(message.signature);
+        this.inputs = new ArrayList<>(message.inputs);
     }
 
     public boolean processTransaction(Blockchain blockchain) {
@@ -107,22 +107,22 @@ public class Transaction {
     private String calculateHash() {
         sequence++;
         return HashUtil.applySHA256(
-                HashUtil.getEncodedString(sender) +
-                        HashUtil.getEncodedString(recipient) +
+                HashUtil.getEncodedKey(sender) +
+                        HashUtil.getEncodedKey(recipient) +
                         Float.toString(value) + sequence
         );
     }
 
     public void generateSignature(PrivateKey privateKey) {
-        String data = HashUtil.getEncodedString(sender) +
-                HashUtil.getEncodedString(recipient) +
+        String data = HashUtil.getEncodedKey(sender) +
+                HashUtil.getEncodedKey(recipient) +
                 Float.toString(value);
         this.signature = SignatureUtil.applyECDSASignature(privateKey, data);
     }
 
     public boolean verifySignature() {
-        String data = HashUtil.getEncodedString(sender) +
-                HashUtil.getEncodedString(recipient) +
+        String data = HashUtil.getEncodedKey(sender) +
+                HashUtil.getEncodedKey(recipient) +
                 Float.toString(value);
         return SignatureUtil.verifyECDSASignature(sender, data, signature);
     }
