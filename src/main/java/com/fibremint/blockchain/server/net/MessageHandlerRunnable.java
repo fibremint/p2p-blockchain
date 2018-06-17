@@ -204,7 +204,10 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
                               //no catchup necessary
                 return;*/
 
-            if ((logic1) && (logic2 && logic3)) {
+/*            if ((logic1) || (logic2 && logic3)) {
+                //no catchup necessary
+                return;*/
+            if (logic2 && logic3) {
                 //no catchup necessary
                 return;
 
