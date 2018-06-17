@@ -172,10 +172,22 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
 
     		int localTransactionLength = blockchain.getLength();
     		if (localLatestBlock != null) localTransactionLength = localLatestBlock.transactions.size();
-            if (localLatestBlockHash.equals(messageLatestBlock.getLatestHash())
+            /*if (localLatestBlockHash.equals(messageLatestBlock.getLatestHash())
                     && (blockchain.getLength() >= messageLatestBlock.blockchainLength
                     && localTransactionLength >= messageLatestBlock.transactionLength)) {
                               //no catchup necessary
+                return;*/
+            boolean logic1 = localLatestBlockHash.equals(messageLatestBlock.getLatestHash());
+            boolean logic2 = blockchain.getLength() >= messageLatestBlock.blockchainLength;
+            boolean logic3 = localTransactionLength >= messageLatestBlock.transactionLength;
+            /*if (localLatestBlockHash.equals(messageLatestBlock.getLatestHash())
+                    && (blockchain.getLength() >= messageLatestBlock.blockchainLength
+                    && localTransactionLength >= messageLatestBlock.transactionLength)) {
+                              //no catchup necessary
+                return;*/
+
+            if ((logic1) && (logic2 && logic3)) {
+                //no catchup necessary
                 return;
 
             } else {
