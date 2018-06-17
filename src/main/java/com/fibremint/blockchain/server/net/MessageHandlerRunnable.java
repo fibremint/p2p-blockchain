@@ -178,7 +178,7 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
             } else
     			localLatestBlockHash = "0";
 
-    		int localTransactionLength = 0;
+    		int localTransactionLength = blockchain.getLength();
     		if (localLatestBlock != null) localTransactionLength = localLatestBlock.transactions.size();
             if (localLatestBlockHash.equals(message.getLatestHash())
                     || blockchain.getLength() >= message.blockchainLength
