@@ -140,8 +140,22 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
 
 	private synchronized void catchUpHandler(MessageCatchUp message) {
         try (PrintWriter outWriter = new PrintWriter(new PrintWriter(clientSocket.getOutputStream()))) {
-            List<Block> catchUpBlocks = new ArrayList<>();
-            for (int i = message.blockIndex; i < blockchain.getLength(); i++)
+            List<Block> catchUpBlocks;
+
+            if (message.blockIndex != 0) {
+                catchUpBlocks = new ArrayList<>();
+                for (int i = message.blockIndex; i < blockchain.getLength(); i++)
+                    catchUpBlocks.add(blockchain.blockchain.get(i));
+            } else {
+                catchUpBlocks = new ArrayList<>(blockchain.blockchain);
+            }
+
+            HashMap<String, MessageTransactionOutput> catchUpUTXOs = new HashMap<>();
+            for (Map.Entry<String, TransactionOutput> item : blockchain.UTXOs.entrySet()) {
+                TransactionOutput UTXO = item.getValue();
+                catchUpUTXOs.put(UTXO.hash, new MessageTransactionOutput(UTXO));
+            }
+            /*for (int i = message.blockIndex; i < blockchain.getLength(); i++)
                 catchUpBlocks.add(blockchain.blockchain.get(i));
 
             HashMap<String, MessageTransactionOutput> catchUpUTXOs = new HashMap<>();
@@ -153,7 +167,11 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
             String jsonMessage = gson.toJson(new MessageCatchUp(message.blockIndex, catchUpBlocks, catchUpUTXOs));
             outWriter.println(jsonMessage);
             outWriter.flush();
+            outWriter.close();*/
+            outWriter.println(gson.toJson(new MessageCatchUp(message.blockIndex, catchUpBlocks, catchUpUTXOs)));
+            outWriter.flush();
             outWriter.close();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
