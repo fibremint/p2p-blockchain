@@ -19,14 +19,6 @@ public class Transaction {
 
     private static int sequence = 0;
 
-    public Transaction(Transaction transaction) {
-        this.hash = transaction.hash;
-        this.sender = transaction.sender;
-        this.recipient = transaction.recipient;
-        this.value = transaction.value;
-        this.signature = transaction.signature;
-    }
-
     // TODO: remove boolean parameter
     public Transaction(String minerEncodedPublicKey, boolean isBlockchainEmpty) {
         Wallet coinProvider = new Wallet();
