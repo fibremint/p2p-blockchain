@@ -28,6 +28,8 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
     private Blockchain blockchain;
 
     private Gson gson;
+    private JsonParser jsonParser;
+
 
     public MessageHandlerRunnable(BlockchainServer blockchainServer) {
         super(blockchainServer);
@@ -38,6 +40,7 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
         this.blockchain = blockchainServer.getBlockchain();
 
        gson = new GsonBuilder().create();
+       jsonParser = new JsonParser();
     }
 
     public void run() {
@@ -46,7 +49,6 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
                 new InputStreamReader(clientSocket.getInputStream()));
         	PrintWriter outWriter = new PrintWriter(clientSocket.getOutputStream(), true);
 
-            JsonParser jsonParser = new JsonParser();
             JsonElement jsonElement;
             String messageType;
 
@@ -152,23 +154,28 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
 		} catch (Exception e) {
 		    e.printStackTrace();
 		}*/
-        List<Block> catchUpBlocks = new ArrayList<>();
-        for(int i = message.blockIndex; i < blockchain.getLength(); i++)
-            catchUpBlocks.add(blockchain.blockchain.get(i));
+        try (PrintWriter outWriter = new PrintWriter(new PrintWriter(clientSocket.getOutputStream()))) {
+            List<Block> catchUpBlocks = new ArrayList<>();
+            for (int i = message.blockIndex; i < blockchain.getLength(); i++)
+                catchUpBlocks.add(blockchain.blockchain.get(i));
 
-        HashMap<String, MessageTransactionOutput> catchUpUTXOs = new HashMap<>();
-        for(Map.Entry<String, TransactionOutput> item : blockchain.UTXOs.entrySet()) {
-            TransactionOutput UTXO = item.getValue();
-            catchUpUTXOs.put(UTXO.hash, new MessageTransactionOutput(UTXO));
+            HashMap<String, MessageTransactionOutput> catchUpUTXOs = new HashMap<>();
+            for (Map.Entry<String, TransactionOutput> item : blockchain.UTXOs.entrySet()) {
+                TransactionOutput UTXO = item.getValue();
+                catchUpUTXOs.put(UTXO.hash, new MessageTransactionOutput(UTXO));
+            }
+
+            String jsonMessage = gson.toJson(new MessageCatchUp(message.blockIndex, catchUpBlocks, catchUpUTXOs));
+            outWriter.println(jsonMessage);
+            outWriter.flush();
+            outWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
-        ServerInfo serverInfo = super.getBlockchainServer().getRemoteServerInfo();
-        String jsonMessage = gson.toJson(new MessageCatchUp(message.blockIndex, catchUpBlocks, catchUpUTXOs));
-
-        new Thread(new MessageSenderRunnable(serverInfo, jsonMessage)).start();
 	}
 
-    private synchronized void latestBlockHandler(MessageLatestBlock message) {
+    private synchronized void latestBlockHandler(MessageLatestBlock messageLatestBlock) {
         String localLatestBlockHash;
         Block localLatestBlock = null;
         try {
@@ -180,9 +187,9 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
 
     		int localTransactionLength = blockchain.getLength();
     		if (localLatestBlock != null) localTransactionLength = localLatestBlock.transactions.size();
-            if (localLatestBlockHash.equals(message.getLatestHash())
-                    || blockchain.getLength() >= message.blockchainLength
-                    || localTransactionLength >= message.transactionLength) {
+            if (localLatestBlockHash.equals(messageLatestBlock.getLatestHash())
+                    || blockchain.getLength() >= messageLatestBlock.blockchainLength
+                    || localTransactionLength >= messageLatestBlock.transactionLength) {
                               //no catchup necessary
                 return;
 
@@ -192,7 +199,7 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
     			String remoteIP = (((InetSocketAddress) clientSocket.getRemoteSocketAddress())
                         .getAddress()).toString().replace("/", "");
     			Socket socket;
-    			socket = new Socket(remoteIP, message.getLocalPort());
+    			socket = new Socket(remoteIP, messageLatestBlock.getLocalPort());
     			PrintWriter outWriter;
     			outWriter = new PrintWriter(socket.getOutputStream(), true);
     			
@@ -203,16 +210,31 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
     			outWriter.println(gson.toJson(new MessageCatchUp(catchUpBlockIndex)));
                 outWriter.flush();
 
-                ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+  /*              ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
 
-                List<Block> catchUpBlocks = (List<Block>) inputStream.readObject();
-                HashMap<String, TransactionOutput> catchUpUXTOs = (HashMap) inputStream.readObject();
+*//*                List<Block> catchUpBlocks = (List<Block>) inputStream.readObject();
+                HashMap<String, TransactionOutput> catchUpUTXOs = (HashMap) inputStream.readObject();
 
-                inputStream.close();
+                inputStream.close();*/
+                BufferedReader inputReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                JsonElement messageJson = jsonParser.parse(inputReader.readLine());
+                MessageCatchUp messageCatchUp = gson.fromJson(messageJson, MessageCatchUp.class);
+
+                ArrayList<Block> catchUpBlocks = new ArrayList<>();
+                for(MessageBlock messageBlock : messageCatchUp.catchUpBlocks) {
+                    catchUpBlocks.add(new Block(messageBlock));
+                }
+
+                HashMap<String, TransactionOutput> catchUpUTXOs = new HashMap<>();
+                for(Map.Entry<String, MessageTransactionOutput> item : messageCatchUp.UTXOs.entrySet()) {
+                    MessageTransactionOutput UTXO = item.getValue();
+                    catchUpUTXOs.put(UTXO.hash, new TransactionOutput(UTXO));
+                }
+
+                inputReader.close();
     			socket.close();
 
-    			blockchain.catchUp(catchUpBlocks, catchUpUXTOs);
-
+    			blockchain.catchUp(catchUpBlocks, catchUpUTXOs);
     		}
     	
     	} catch (Exception e) {
