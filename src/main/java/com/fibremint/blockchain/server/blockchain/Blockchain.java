@@ -5,54 +5,95 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Blockchain implements Cloneable {
-    public static ArrayList<Block> blockchain = new ArrayList<>();
-    public static HashMap<String, TransactionOutput> UTXOs = new HashMap<>();
+public class Blockchain {
+    public ArrayList<Block> blockchain = new ArrayList<>();
+    public HashMap<String, TransactionOutput> UTXOs = new HashMap<>();
     public static int difficulty = 5;
     public static float minimumTransaction = 0.1f;
     public static float miningReward = 100f;
 
-    public static Block getBlock(String blockHash) {
+    public Blockchain() {
+
+    }
+
+    public Blockchain(Blockchain blockchain) {
+        this.blockchain = new ArrayList<>(blockchain.blockchain);
+        this.UTXOs = new HashMap<>(blockchain.UTXOs);
+    }
+
+    public Block getBlock(String blockHash) {
         return blockchain.stream().filter(block -> blockHash.equals(block.header.hash))
                 .findFirst().orElse(null);
     }
 
-    public static Block getLatestBlock() {
-        return (blockchain.size() == 0) ? null : blockchain.get(blockchain.size() - 1);
+    public boolean isBlockchainEmpty() {
+        return blockchain.size() == 0;
     }
 
-    public static int getLength() {
+    public Block getLatestBlock() {
+        return (isBlockchainEmpty()) ? null : blockchain.get(blockchain.size() - 1);
+    }
+
+    public int getLength() {
         return blockchain.size();
     }
 
-    public Object clone() {
-        Object obj = null;
-        try {
-            obj = super.clone();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return obj;
-    }
-
-    public static synchronized void catchUp(List<Block> catchUpBlocks, HashMap<String, TransactionOutput> catchUpUXTOs) {
+    // TODO: validation would be required.
+    public synchronized void catchUp(List<Block> catchUpBlocks, HashMap<String, TransactionOutput> catchUpUXTOs) {
         blockchain.addAll(catchUpBlocks);
         UTXOs = catchUpUXTOs;
-        // TODO: validation would be required.
     }
 
-    public static Boolean isChainValid(ArrayList<Block> blockchain) {
+    public boolean addBlock(Block candidateBlock) {
+        String hashTarget = new String(new char[Blockchain.difficulty]).replace('\0', '0');
+
+        Block latestBlock = this.getLatestBlock();
+        if (latestBlock != null) {
+            if (!candidateBlock.header.hash.equals(candidateBlock.header.calculateHash())) {
+                System.out.println("#Current Hashes not equal");
+                return false;
+            }
+            //compare previous hash and registered previous hash
+            if (!latestBlock.header.hash.equals(candidateBlock.header.previousHash)) {
+                System.out.println("#Previous Hashes not equal");
+                return false;
+            }
+            //check if hash is solved
+            if (!candidateBlock.header.hash.substring(0, Blockchain.difficulty).equals(hashTarget)) {
+                System.out.println("#This block hasn't been mined");
+                return false;
+            }
+        }
+
+        this.blockchain.add(candidateBlock);
+        return true;
+    }
+
+        public boolean addTransaction(Transaction transaction) {
+        if (transaction == null) return false;
+        if (!"0".equals(transaction.hash)) {
+            if (!transaction.processTransaction(this)) {
+                System.out.println("Transaction failed to process. Discarded.");
+                return false;
+            }
+        }
+        this.getLatestBlock().transactions.add(transaction);
+
+        System.out.println("Transaction successfully added to block");
+        return true;
+    }
+
+    public static Boolean isChainValid(Blockchain blockchain) {
         Block currentBlock;
         Block previousBlock;
         String hashTarget = new String(new char[Blockchain.difficulty]).replace('\0', '0');
-        HashMap<String,TransactionOutput> tempUTXOs = new HashMap<>(UTXOs); //a temporary working list of unspent transactions at a given block state.
+        HashMap<String,TransactionOutput> tempUTXOs = new HashMap<>(blockchain.UTXOs); //a temporary working list of unspent transactions at a given block state.
 
         //loop through blockchain to check hashes:
-        for(int i=1; i < blockchain.size(); i++) {
+        for(int i=1; i < blockchain.blockchain.size(); i++) {
 
-            currentBlock = blockchain.get(i);
-            previousBlock = blockchain.get(i-1);
+            currentBlock = blockchain.blockchain.get(i);
+            previousBlock = blockchain.blockchain.get(i-1);
             //compare registered hash and calculated hash:
             if(!currentBlock.header.hash.equals(currentBlock.header.calculateHash()) ){
                 System.out.println("#Current Hashes not equal");

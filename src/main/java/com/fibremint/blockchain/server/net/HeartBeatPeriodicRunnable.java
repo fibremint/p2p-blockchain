@@ -1,21 +1,24 @@
 package com.fibremint.blockchain.server.net;
 
+import com.fibremint.blockchain.server.BlockchainServer;
+import com.fibremint.blockchain.server.RootClassAccessibleAbstract;
 import com.fibremint.blockchain.server.net.message.MessageHeartbeat;
 
 import java.util.Date;
 import java.util.HashMap;
 
-public class HeartBeatPeriodicRunnable implements Runnable {
+public class HeartBeatPeriodicRunnable extends RootClassAccessibleAbstract implements Runnable {
     public static final int THREAD_SLEEP = 2000;
 
     private HashMap<ServerInfo, Date> serverStatus;
     private int sequenceNumber;
     private int localPort;
 
-    public HeartBeatPeriodicRunnable(HashMap<ServerInfo, Date> serverStatus, int localPort) {
-        this.serverStatus = serverStatus;
+    public HeartBeatPeriodicRunnable(BlockchainServer blockchainServer) {
+        super(blockchainServer);
+        this.serverStatus = blockchainServer.getRemoteServerStatus();
         this.sequenceNumber = 0;
-        this.localPort = localPort;
+        this.localPort = blockchainServer.getLocalPort();
         
     }
 

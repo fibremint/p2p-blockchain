@@ -1,5 +1,7 @@
 package com.fibremint.blockchain.server.net;
 
+import com.fibremint.blockchain.server.BlockchainServer;
+import com.fibremint.blockchain.server.RootClassAccessibleAbstract;
 import com.fibremint.blockchain.server.blockchain.*;
 import com.fibremint.blockchain.server.net.message.*;
 import com.fibremint.blockchain.server.util.HashUtil;
@@ -15,19 +17,25 @@ import java.net.InetSocketAddress;
 import java.security.PublicKey;
 import java.util.*;
 
-public class MessageHandlerRunnable implements Runnable{
+public class MessageHandlerRunnable extends RootClassAccessibleAbstract implements Runnable {
     private static final int REMOTE_SERVER_TIMEOUT = 4000;
 
     private Socket clientSocket;
     private HashMap<ServerInfo, Date> serverStatus;
-    private String remoteIP;
     private int localPort;
+    private String remoteIP;
+
+    private Blockchain blockchain;
+
     private Gson gson;
 
-    public MessageHandlerRunnable(Socket clientSocket, HashMap<ServerInfo, Date> serverStatus, int localPort) {
-        this.clientSocket = clientSocket;
-        this.serverStatus = serverStatus;
-        this.localPort = localPort;
+    public MessageHandlerRunnable(BlockchainServer blockchainServer) {
+        super(blockchainServer);
+        this.clientSocket = blockchainServer.getClientSocket();
+        this.serverStatus = blockchainServer.getRemoteServerStatus();
+        this.localPort = blockchainServer.getRemotePort();
+
+        this.blockchain = blockchainServer.getBlockchain();
 
        gson = new GsonBuilder().create();
     }
@@ -84,12 +92,11 @@ public class MessageHandlerRunnable implements Runnable{
         }
     }
 
-
     private void walletBalanceHandler(MessageWalletBalance message, PrintWriter outWriter) {
         float total = 0f;
         PublicKey publicKey = SignatureUtil.generatePublicKey(HashUtil.getDecoded(message.publicKey));
         HashMap<String, TransactionOutput> walletUTXOs = new HashMap<>();
-        for(Map.Entry<String, TransactionOutput> item : Blockchain.UTXOs.entrySet()) {
+        for(Map.Entry<String, TransactionOutput> item : getBlockchainServer().getBlockchain().UTXOs.entrySet()) {
             TransactionOutput UTXO = item.getValue();
             if (UTXO.isMine(publicKey)) {
                 total += UTXO.value;
@@ -113,27 +120,10 @@ public class MessageHandlerRunnable implements Runnable{
     private void mineBlockHandler(MessageMineBlock message, PrintWriter outWriter) {
         try {
             Block mineBlock = message.block;
-            byte[] minerPublicKeyBinary = HashUtil.getDecoded(message.miner);
-            PublicKey minerPublicKey = SignatureUtil.generatePublicKey(minerPublicKeyBinary);
+            Transaction miningTransaction = new Transaction(message.miner, blockchain.isBlockchainEmpty());
 
-            Wallet coinProvider = new Wallet();
-            Transaction genesisTransaction = new Transaction(
-                    coinProvider.publicKey, minerPublicKey,
-                    Blockchain.miningReward, null);
-            genesisTransaction.generateSignature(coinProvider.privateKey);
-            genesisTransaction.hash = "0";
-            genesisTransaction.outputs.add(new TransactionOutput(
-                    genesisTransaction.recipient,
-                    genesisTransaction.value,
-                    genesisTransaction.hash
-            ));
-            mineBlock.addTransaction(genesisTransaction);
-
-            ArrayList<Block> testChain = new ArrayList<>(Blockchain.blockchain);
-            testChain.add(mineBlock);
-            if (Blockchain.isChainValid(testChain)) {
-                Blockchain.blockchain.add(mineBlock);
-                Blockchain.UTXOs.put(mineBlock.transactions.get(0).outputs.get(0).hash,
+            if (blockchain.addBlock(mineBlock) && blockchain.addTransaction(miningTransaction)) {
+                blockchain.UTXOs.put(mineBlock.transactions.get(0).outputs.get(0).hash,
                         mineBlock.transactions.get(0).outputs.get(0));
                 outWriter.println(gson.toJson(new MessageResult(MessageResult.Type.accepted, MessageType.mineBlock)));
             } else {
@@ -146,17 +136,18 @@ public class MessageHandlerRunnable implements Runnable{
         }
     }
 
+    // TODO: change send json object.
 	private synchronized void catchUpHandler(MessageCatchUp message) {
 		try (ObjectOutputStream outStream = new ObjectOutputStream(clientSocket.getOutputStream())){
             List<Block> catchUpBlocks = new ArrayList<>();
 
-            for(int i = message.blockIndex; i < Blockchain.getLength(); i++)
-                catchUpBlocks.add(Blockchain.blockchain.get(i));
+            for(int i = message.blockIndex; i < blockchain.getLength(); i++)
+                catchUpBlocks.add(blockchain.blockchain.get(i));
 
             outStream.writeObject(catchUpBlocks);
             outStream.flush();
 
-            outStream.writeObject(Blockchain.UTXOs);
+            outStream.writeObject(blockchain.UTXOs);
             outStream.flush();
 
 		} catch (Exception e) {
@@ -168,8 +159,8 @@ public class MessageHandlerRunnable implements Runnable{
         String localLatestBlockHash;
         Block localLatestBlock = null;
         try {
-    		if (Blockchain.getLatestBlock() != null) {
-    		    localLatestBlock = Blockchain.getLatestBlock();
+    		if (blockchain.getLatestBlock() != null) {
+    		    localLatestBlock = blockchain.getLatestBlock();
                 localLatestBlockHash = localLatestBlock.header.calculateHash();
             } else
     			localLatestBlockHash = "0";
@@ -177,7 +168,7 @@ public class MessageHandlerRunnable implements Runnable{
     		int localTransactionLength = 0;
     		if (localLatestBlock != null) localTransactionLength = localLatestBlock.transactions.size();
             if (localLatestBlockHash.equals(message.getLatestHash())
-                    || Blockchain.getLength() >= message.blockchainLength
+                    || blockchain.getLength() >= message.blockchainLength
                     || localTransactionLength >= message.transactionLength) {
                               //no catchup necessary
                 return;
@@ -195,7 +186,7 @@ public class MessageHandlerRunnable implements Runnable{
     			//naive catchup
     			int catchUpBlockIndex = 0;
                 if (!localLatestBlockHash.equals("0"))
-                    catchUpBlockIndex = Blockchain.blockchain.indexOf(Blockchain.getBlock(localLatestBlockHash));
+                    catchUpBlockIndex = blockchain.blockchain.indexOf(blockchain.getBlock(localLatestBlockHash));
     			outWriter.println(gson.toJson(new MessageCatchUp(catchUpBlockIndex)));
                 outWriter.flush();
 
@@ -207,7 +198,7 @@ public class MessageHandlerRunnable implements Runnable{
                 inputStream.close();
     			socket.close();
 
-    			Blockchain.catchUp(catchUpBlocks, catchUpUXTOs);
+    			blockchain.catchUp(catchUpBlocks, catchUpUXTOs);
 
     		}
     	
@@ -218,7 +209,7 @@ public class MessageHandlerRunnable implements Runnable{
     private void propertiesHandler(PrintWriter outWriter) {
        try {
            String blockHash = "0";
-           Block block = Blockchain.getLatestBlock();
+           Block block = blockchain.getLatestBlock();
 
            if (block != null) blockHash = block.header.hash;
 
@@ -232,14 +223,20 @@ public class MessageHandlerRunnable implements Runnable{
 
     // TODO: Implement validate transaction.
     private void transactionHandler(MessageTransaction message, PrintWriter outWriter) {
-        if (Blockchain.getLatestBlock() != null) {
-            try {
+        if (blockchain.getLatestBlock() != null) {
+            /*try {
                 Transaction transaction = new Transaction(message.hash, message.sender,
                         message.recipient, message.value, message.signature, message.inputs);
-                Blockchain.getLatestBlock().addTransaction(transaction);
 
-                outWriter.println(gson.toJson(new MessageResult(MessageResult.Type.accepted, MessageType.transaction)));
-/*                ArrayList<Block> testChain = new ArrayList<>(Blockchain.blockchain);
+                if (Blockchain.getLatestBlock().addTransaction(transaction)) {
+                    outWriter.println(gson.toJson(
+                            new MessageResult(MessageResult.Type.accepted, MessageType.transaction)));
+                } else {
+                    outWriter.println(gson.toJson(
+                            new MessageResult(MessageResult.Type.error, MessageType.transaction,
+                                    "Transaction error")));
+                }
+*//*                ArrayList<Block> testChain = new ArrayList<>(Blockchain.blockchain);
 
                 Block latestBlock = testChain.get(testChain.size() - 1);
                 latestBlock.addTransaction(transaction);
@@ -252,14 +249,24 @@ public class MessageHandlerRunnable implements Runnable{
                 } else {
                     outWriter.println(gson.toJson(new MessageResult(MessageResult.Type.denied, MessageType.transaction,
                             "Transaction error")));
-                }*/
+                }*//*
 
                 outWriter.flush();
-            } catch (Exception e) {
-                e.printStackTrace();
+            } */
+            Transaction transaction = new Transaction(message.hash, message.sender,
+                    message.recipient, message.value, message.signature, message.inputs);
+
+           if (blockchain.addTransaction(transaction)) {
+               for (TransactionInput input : message.inputs)
+                   blockchain.UTXOs.remove(input.transactionOutputHash);
+               outWriter.println(gson.toJson(new MessageResult(MessageResult.Type.accepted, MessageType.transaction)));
+           } else {
+                outWriter.println(gson.toJson(new MessageResult(MessageResult.Type.error, MessageType.transaction,
+                        "Transaction failed.")));
             }
         } else {
-            System.out.println("Not available mined blocks");
+            outWriter.println(gson.toJson(new MessageResult(MessageResult.Type.denied, MessageType.transaction,
+                    "Not available block.")));
         }
 	}
 
@@ -285,6 +292,7 @@ public class MessageHandlerRunnable implements Runnable{
     	}
     }
 
+    // TODO: check remoteIP is needed.
     private void serverInQuestionHandler(MessageServerInQuestion message) {
         try {
             ServerInfo serverInQuestion;

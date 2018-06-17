@@ -1,5 +1,7 @@
 package com.fibremint.blockchain.server.net;
 
+import com.fibremint.blockchain.server.BlockchainServer;
+import com.fibremint.blockchain.server.RootClassAccessibleAbstract;
 import com.fibremint.blockchain.server.blockchain.Block;
 import com.fibremint.blockchain.server.blockchain.Blockchain;
 import com.fibremint.blockchain.server.net.message.MessageLatestBlock;
@@ -10,15 +12,19 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Collections;
 
-public class CatchupPeriodicRunnable implements Runnable {
+public class CatchupPeriodicRunnable extends RootClassAccessibleAbstract implements Runnable {
     public static final int THREAD_SLEEP = 2000;
+
+    private Blockchain blockchain;
 
 	private HashMap<ServerInfo, Date> serverStatus;
 	private int localPort;
 	
-	public CatchupPeriodicRunnable(HashMap<ServerInfo, Date> serverStatus, int localPort) {
-		this.serverStatus = serverStatus;
-		this.localPort = localPort;
+	public CatchupPeriodicRunnable(BlockchainServer blockchainServer) {
+	    super(blockchainServer);
+		this.serverStatus = blockchainServer.getRemoteServerStatus();
+		this.localPort = blockchainServer.getLocalPort();
+		this.blockchain = blockchainServer.getBlockchain();
 	}
 	
 	@Override
@@ -26,22 +32,18 @@ public class CatchupPeriodicRunnable implements Runnable {
 	    Gson gson = new Gson();
 	    Block latestBlock;
 		while(true) {
-			//String LBmessage = "lb|" + String.valueOf(localPort) + "|" + String.valueOf(blockchain.getLength()) + "|";
-            MessageLatestBlock message = new MessageLatestBlock(localPort, Blockchain.getLength());
-            latestBlock = Blockchain.getLatestBlock();
+            MessageLatestBlock message = new MessageLatestBlock(localPort, blockchain.getLength());
+            latestBlock = blockchain.getLatestBlock();
             if (latestBlock != null) {
-				String latestHash = Blockchain.getLatestBlock().header.calculateHash();
+				String latestHash = latestBlock.header.calculateHash();
 				if (latestHash != null) {
-                    //LBmessage += Base64.getEncoder().encodeToString(latestHash);
                     message.setLatestHash(latestHash);
                     message.setTransactionLength(latestBlock.transactions.size());
 				} else {
-                    //LBmessage += "null";
                     // Blockchain hasn't any of latestBlock
                     message.setLatestHash("0");
                 }
 			} else {
-				//LBmessage += "null";
                 message.setLatestHash("0");
 			}
 			 

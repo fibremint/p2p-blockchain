@@ -3,13 +3,12 @@ package com.fibremint.blockchain.server.blockchain;
 import com.fibremint.blockchain.server.util.HashUtil;
 import com.fibremint.blockchain.server.util.SignatureUtil;
 
-import java.io.Serializable;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Transaction implements Serializable {
+public class Transaction {
     public String hash;
     public PublicKey sender;
     public PublicKey recipient;
@@ -20,13 +19,30 @@ public class Transaction implements Serializable {
 
     private static int sequence = 0;
 
-    public Transaction(PublicKey sender, PublicKey recipient, float value, ArrayList<TransactionInput> inputs) {
+    public Transaction(Transaction transaction) {
+        this.hash = transaction.hash;
+        this.sender = transaction.sender;
+        this.recipient = transaction.recipient;
+        this.value = transaction.value;
+        this.signature = transaction.signature;
+    }
+
+    public Transaction(String minerEncodedPublicKey, boolean isBlockchainEmpty) {
+        Wallet coinProvider = new Wallet();
+
+        this.sender = coinProvider.publicKey;
+        this.recipient = SignatureUtil.generatePublicKey(HashUtil.getDecoded(minerEncodedPublicKey));
+        this.value = Blockchain.miningReward;
+        this.inputs = new ArrayList<>();
         this.outputs = new ArrayList<>();
 
-        this.sender = sender;
-        this.recipient = recipient;
-        this.value = value;
-        this.inputs = inputs;
+        generateSignature(coinProvider.privateKey);
+        this.hash = "0";
+        this.outputs.add(new TransactionOutput(
+                this.recipient,
+                this.value,
+                this.hash
+        ));
     }
 
     public Transaction(String hash, String sender, String recipient, float value, String signature,
@@ -38,14 +54,15 @@ public class Transaction implements Serializable {
         this.signature = HashUtil.getDecoded(signature);
         this.inputs = new ArrayList<>(inputs);
     }
-    public boolean processTransaction() {
+
+    public boolean processTransaction(Blockchain blockchain) {
         if (!verifySignature()) {
             System.out.println("#Transaction signature failed to verify");
             return false;
         }
 
         for (TransactionInput i : inputs)
-            i.UTXO = Blockchain.UTXOs.get(i.transactionOutputHash);
+            i.UTXO = blockchain.UTXOs.get(i.transactionOutputHash);
 
         if (getInputsValue() < Blockchain.minimumTransaction) {
             System.out.println("Transaction inputs too small: " + getInputsValue());
@@ -59,11 +76,11 @@ public class Transaction implements Serializable {
         outputs.add(new TransactionOutput(this.sender, leftOver, hash));
 
         for (TransactionOutput o : outputs)
-            Blockchain.UTXOs.put(o.hash, o);
+            blockchain.UTXOs.put(o.hash, o);
 
         for (TransactionInput i : inputs) {
             if (i.UTXO == null) continue;;
-            Blockchain.UTXOs.remove(i.UTXO.hash);
+            blockchain.UTXOs.remove(i.UTXO.hash);
         }
 
         return true;
