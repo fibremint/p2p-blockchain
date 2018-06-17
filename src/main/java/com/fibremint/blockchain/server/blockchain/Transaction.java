@@ -1,6 +1,7 @@
 package com.fibremint.blockchain.server.blockchain;
 
 import com.fibremint.blockchain.server.net.message.MessageTransaction;
+import com.fibremint.blockchain.server.net.message.MessageTransactionInput;
 import com.fibremint.blockchain.server.util.HashUtil;
 import com.fibremint.blockchain.server.util.SignatureUtil;
 
@@ -44,7 +45,9 @@ public class Transaction {
         this.recipient = SignatureUtil.generatePublicKey(HashUtil.getDecoded(message.recipient));
         this.value = message.value;
         this.signature = HashUtil.getDecoded(message.signature);
-        this.inputs = new ArrayList<>(message.inputs);
+        for(MessageTransactionInput messageTransactionInput : message.inputs) {
+            inputs.add(new TransactionInput(messageTransactionInput));
+        }
     }
 
     public boolean processTransaction(Blockchain blockchain) {

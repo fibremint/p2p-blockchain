@@ -4,6 +4,7 @@ import com.fibremint.blockchain.server.blockchain.Transaction;
 import com.fibremint.blockchain.server.blockchain.TransactionInput;
 import com.fibremint.blockchain.server.util.HashUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MessageTransaction extends MessageBase {
@@ -12,7 +13,7 @@ public class MessageTransaction extends MessageBase {
     public String recipient;
     public float value;
     public String signature;
-    public List<TransactionInput> inputs;
+    public List<MessageTransactionInput> inputs = new ArrayList<>();
 
     public MessageTransaction(Transaction transaction) {
         super(MessageType.transaction);
@@ -21,6 +22,9 @@ public class MessageTransaction extends MessageBase {
         this.recipient = HashUtil.getEncodedKey(transaction.recipient);
         this.value = transaction.value;
         this.signature = HashUtil.getEncodedString(transaction.signature);
-        this.inputs = transaction.inputs;
+        //this.inputs = transaction.inputs;
+        for(TransactionInput transactionInput : transaction.inputs) {
+            inputs.add(new MessageTransactionInput());
+        }
     }
 }

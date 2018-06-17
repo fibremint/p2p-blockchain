@@ -187,10 +187,18 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
 
     		int localTransactionLength = blockchain.getLength();
     		if (localLatestBlock != null) localTransactionLength = localLatestBlock.transactions.size();
-            if (localLatestBlockHash.equals(messageLatestBlock.getLatestHash())
-                    || (blockchain.getLength() >= messageLatestBlock.blockchainLength
+
+    		boolean logic1 = localLatestBlockHash.equals(messageLatestBlock.getLatestHash());
+    		boolean logic2 = blockchain.getLength() >= messageLatestBlock.blockchainLength;
+    		boolean logic3 = localTransactionLength >= messageLatestBlock.transactionLength;
+            /*if (localLatestBlockHash.equals(messageLatestBlock.getLatestHash())
+                    && (blockchain.getLength() >= messageLatestBlock.blockchainLength
                     && localTransactionLength >= messageLatestBlock.transactionLength)) {
                               //no catchup necessary
+                return;*/
+
+            if ((logic1) && (logic2 && logic3)) {
+                //no catchup necessary
                 return;
 
             } else {
@@ -218,8 +226,12 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
                 inputStream.close();*/
                 BufferedReader inputReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 JsonElement messageJson = jsonParser.parse(inputReader.readLine());
-                MessageCatchUp messageCatchUp = gson.fromJson(messageJson, MessageCatchUp.class);
-
+                MessageCatchUp messageCatchUp = null;
+                try {
+                    messageCatchUp = gson.fromJson(messageJson, MessageCatchUp.class);
+                } catch (RuntimeException e) {
+                    e.printStackTrace();
+                }
                 ArrayList<Block> catchUpBlocks = new ArrayList<>();
                 for(MessageBlock messageBlock : messageCatchUp.catchUpBlocks) {
                     catchUpBlocks.add(new Block(messageBlock));
@@ -262,8 +274,8 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
             Transaction transaction = new Transaction(message);
 
            if (blockchain.addTransaction(transaction)) {
-               for (TransactionInput input : message.inputs)
-                   blockchain.UTXOs.remove(input.transactionOutputHash);
+               for (MessageTransactionInput messageTransactionInput : message.inputs)
+                   blockchain.UTXOs.remove(messageTransactionInput.transactionOutputHash);
                outWriter.println(gson.toJson(new MessageResult(MessageResult.Type.accepted, MessageType.transaction)));
            } else {
                 outWriter.println(gson.toJson(new MessageResult(MessageResult.Type.error, MessageType.transaction,
