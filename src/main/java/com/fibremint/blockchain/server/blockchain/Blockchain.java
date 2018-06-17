@@ -31,7 +31,11 @@ public class Blockchain {
     }
 
     public Block getLatestBlock() {
-        return (isBlockchainEmpty()) ? null : blockchain.get(blockchain.size() - 1);
+        return (!isBlockchainEmpty()) ? blockchain.get(blockchain.size() - 1) : null;
+    }
+
+    public String getLatestHash() {
+        return (isBlockchainEmpty()) ? blockchain.get(blockchain.size() - 1).header.hash : "0";
     }
 
     public int getLength() {

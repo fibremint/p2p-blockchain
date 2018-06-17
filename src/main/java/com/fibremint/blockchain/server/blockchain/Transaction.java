@@ -21,7 +21,7 @@ public class Transaction {
     private static int sequence = 0;
 
     // TODO: remove boolean parameter
-    public Transaction(String minerEncodedPublicKey, boolean isBlockchainEmpty) {
+    public Transaction(String minerEncodedPublicKey, String latestHash) {
         Wallet coinProvider = new Wallet();
 
         this.sender = coinProvider.publicKey;
@@ -31,7 +31,7 @@ public class Transaction {
         this.outputs = new ArrayList<>();
 
         generateSignature(coinProvider.privateKey);
-        this.hash = "0";
+        this.hash = latestHash;
         this.outputs.add(new TransactionOutput(
                 this.recipient,
                 this.value,

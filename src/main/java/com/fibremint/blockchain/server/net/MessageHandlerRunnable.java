@@ -122,7 +122,7 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
     private void mineBlockHandler(MessageMineBlock message, PrintWriter outWriter) {
         try {
             Block mineBlock = message.block;
-            Transaction miningTransaction = new Transaction(message.miner, blockchain.isBlockchainEmpty());
+            Transaction miningTransaction = new Transaction(message.miner, blockchain.getLatestHash());
 
             if (blockchain.addBlock(mineBlock) && blockchain.addTransaction(miningTransaction)) {
                 blockchain.UTXOs.put(mineBlock.transactions.get(0).outputs.get(0).hash,
