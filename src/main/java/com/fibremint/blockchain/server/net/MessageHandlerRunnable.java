@@ -220,8 +220,8 @@ public class MessageHandlerRunnable extends RootClassAccessibleAbstract implemen
     			
     			//naive catchup
     			int catchUpBlockIndex = 0;
-                if (!localLatestBlockHash.equals("0"))
-                    catchUpBlockIndex = blockchain.blockchain.indexOf(blockchain.getBlock(localLatestBlockHash));
+                /*if (!localLatestBlockHash.equals("0"))
+                    catchUpBlockIndex = blockchain.blockchain.indexOf(blockchain.getBlock(localLatestBlockHash));*/
     			outWriter.println(gson.toJson(new MessageCatchUp(catchUpBlockIndex)));
                 outWriter.flush();
 
